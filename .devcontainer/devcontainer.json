@@ -14,6 +14,28 @@
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
 		"./features/oh-my-posh": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.azure-account",
+				"msazurermtools.azurerm-vscode-tools",
+				"streetsidesoftware.code-spell-checker",
+				"ms-azure-devops.azure-pipelines",
+				"eamodio.gitlens",
+				"heaths.vscode-guid",
+				"shd101wyy.markdown-preview-enhanced",
+				"DavidAnson.vscode-markdownlint",
+				"ms-python.mypy-type-checker",
+				"Postman.postman-for-vscode",
+				"charliermarsh.ruff",
+				"streetsidesoftware.code-spell-checker-russian",
+				"timonwong.shellcheck",
+				"shardulm94.trailing-spaces",
+				"adamhartford.vscode-base64",
+				"redhat.vscode-yaml"
+			]
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
