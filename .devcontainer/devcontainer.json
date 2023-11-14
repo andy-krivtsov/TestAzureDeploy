@@ -13,10 +13,39 @@
         },
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-		"./features/oh-my-posh": {}
+		"ghcr.io/rio/features/chezmoi:1": {},
+		"./features/oh-my-posh": {},
+		"./features/azure-cli-completion": {}
 	},
 	"customizations": {
 		"vscode": {
+			"settings": {
+				"extensions.ignoreRecommendations": true,
+				"editor.copyWithSyntaxHighlighting": false,
+				"markdownlint.config": {
+					"MD001": false,
+					"MD022": false,
+					"MD024": false,
+					"MD025": false,
+					"MD033": false
+				},
+				"terminal.integrated.allowChords": false,
+				"shellcheck.exclude": [
+					"SC2002"
+				],
+				"shellcheck.customArgs": [ "-x" ],
+				"trailing-spaces.trimOnSave": true,
+				"bookmarks.sideBar.expanded": false,
+				"terminal.integrated.scrollback": 10000,
+				"git.mergeEditor": true,
+				"window.commandCenter": true,
+				"terminal.integrated.shellIntegration.enabled": true,
+				"cSpell.language": "en,ru",
+				"cSpell.enableFiletypes": [
+					"!yaml"
+				],
+				"yaml.validate": true
+			},
 			"extensions": [
 				"ms-vscode.azure-account",
 				"msazurermtools.azurerm-vscode-tools",
@@ -39,17 +68,11 @@
 		}
 	}
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "pip3 install --user -r requirements.txt",
-
-	// Configure tool-specific properties.
-	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"

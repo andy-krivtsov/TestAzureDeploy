@@ -1,0 +1,11 @@
+{
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainerFeature.schema.json",
+
+    "id": "azure-cli-completion",
+    "version": "0.1.0",
+    "name": "Azure CLI autocompletion",
+    "description": "Installs Azure CLI bash autocompletion",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
+}
