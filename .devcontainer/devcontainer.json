@@ -33,7 +33,8 @@
 				"timonwong.shellcheck",
 				"shardulm94.trailing-spaces",
 				"adamhartford.vscode-base64",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"mutantdino.resourcemonitor"
 			]
 		}
 	}
