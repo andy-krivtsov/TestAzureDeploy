@@ -1,0 +1,12 @@
+{
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainerFeature.schema.json",
+
+    "id": "oh-my-posh",
+    "version": "0.1.0",
+    "name": "Oh-My-Posh Linux",
+    "documentationURL": "https://ohmyposh.dev/docs",
+    "description": "Installs the oh-my-posh for linus/bash",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
+}

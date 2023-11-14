@@ -9,11 +9,11 @@
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": "none",
 		"ghcr.io/devcontainers/features/git:1": {
-            "version": "latest",
-            "ppa": "false"
+            "version": "os-provided"
         },
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"./features/oh-my-posh": {}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
