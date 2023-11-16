@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -6,7 +7,8 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-templates = Jinja2Templates(directory="demoapp/templates")
+tpl_path = Path(__file__).absolute().parent.joinpath("templates")
+templates = Jinja2Templates(directory=tpl_path)
 
 app.add_middleware(
     CORSMiddleware,
