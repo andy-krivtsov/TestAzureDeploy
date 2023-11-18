@@ -57,6 +57,7 @@ stages:
             inputs:
               connectedServiceNameARM: AzureServiceConnection
               resourceGroup: $(resourceGroup)
+              acrName: $(acrName)
               imageToDeploy: "$(acrName).azurecr.io/$(imageRepository):$(tag)"
               containerAppName: $(containerAppName)
               containerAppEnvironment: $(containerAppEnvironment)
