@@ -14,8 +14,9 @@ variables:
   containerRegistry: 'akazureregistry.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: 'dev'
+  resourceGroup: 'AzureLearn'
   containerAppName: 'demo-python-dev'
-  containerAppEnvironmentName: 'DemoContainerAppEnv01'
+  containerAppEnvironment: 'DemoContainerAppEnv01'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -39,20 +40,28 @@ stages:
         tags: |
           $(tag)
 
-  - job: Deploy
+- stage: Deploy
+  displayName: Deploy application
+  jobs:
+  - deployment: Deploy
     displayName: Deploy Container App
     pool:
       vmImage: $(vmImageName)
-    steps:
-    - task: AzureContainerApps@1
-      displayName: Deploy application
-      inputs:
-        connectedServiceNameARM: AzureServiceConnection
-        imageToDeploy: "$(containerRegistry)/$(imageRepository):$(tag)"
-        containerAppName: $(containerAppName)
-        containerAppEnvironment: $(containerAppEnvironmentName)
-        ingress: external
-        targetPort: 8080
+    environment: 'Python-Container-App-Dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureContainerApps@1
+            displayName: "Deploy container app: $(containerAppName)"
+            inputs:
+              connectedServiceNameARM: AzureServiceConnection
+              resourceGroup: $(resourceGroup)
+              imageToDeploy: "$(containerRegistry)/$(imageRepository):$(tag)"
+              containerAppName: $(containerAppName)
+              containerAppEnvironment: $(containerAppEnvironment)
+              ingress: external
+              targetPort: 8080
 
 
 
