@@ -58,6 +58,7 @@ stages:
               connectedServiceNameARM: AzureServiceConnection
               resourceGroup: $(resourceGroup)
               imageToDeploy: "$(containerRegistry)/$(imageRepository):$(tag)"
+              acrName: $(containerRegistry)
               containerAppName: $(containerAppName)
               containerAppEnvironment: $(containerAppEnvironment)
               ingress: external
