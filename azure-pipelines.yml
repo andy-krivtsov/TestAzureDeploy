@@ -8,18 +8,24 @@ resources:
 - repo: self
 
 variables:
-  group: azure-learn-acr
+  - group: 'azure-learn-acr'
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '580ae529-1a08-4208-8b04-a344e318b8df'
-  imageRepository: 'learn/demo-python'
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  tag: 'dev'
-  resourceGroup: 'AzureLearn'
-  containerAppName: 'demo-python-dev'
-  containerAppEnvironment: 'DemoContainerAppEnv01'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+  - name: dockerRegistryServiceConnection
+    value: '580ae529-1a08-4208-8b04-a344e318b8df'
+  - name: imageRepository
+    value: 'learn/demo-python'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/Dockerfile'
+  - name: tag
+    value: 'dev'
+  - name: resourceGroup
+    value: 'AzureLearn'
+  - name: containerAppName
+    value: 'demo-python-dev'
+  - name: containerAppEnvironment
+    value: 'DemoContainerAppEnv01'
+  - name: vmImageName
+    value: 'ubuntu-latest'
 
 stages:
 - stage: Build
