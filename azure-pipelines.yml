@@ -8,10 +8,10 @@ resources:
 - repo: self
 
 variables:
+  group: azure-learn-acr
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '580ae529-1a08-4208-8b04-a344e318b8df'
   imageRepository: 'learn/demo-python'
-  acrName: "akazureregistry"
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: 'dev'
   resourceGroup: 'AzureLearn'
@@ -58,6 +58,8 @@ stages:
               connectedServiceNameARM: AzureServiceConnection
               resourceGroup: $(resourceGroup)
               acrName: $(acrName)
+              acrPassword: $(acrPassword)
+              acrUsername: $(acrUsername)
               imageToDeploy: "$(acrName).azurecr.io/$(imageRepository):$(tag)"
               containerAppName: $(containerAppName)
               containerAppEnvironment: $(containerAppEnvironment)
