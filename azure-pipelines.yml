@@ -66,7 +66,7 @@ stages:
               acrName: $(acrName)
               acrPassword: $(acrPassword)
               acrUsername: $(acrUsername)
-              imageToDeploy: "$(acrName).azurecr.io/$(imageRepository):$(tag)"
+              imageToDeploy: "$(acrName).azurecr.io/$(imageRepository):1.0.0"
               containerAppName: $(containerAppName)
               containerAppEnvironment: $(containerAppEnvironment)
               ingress: external
