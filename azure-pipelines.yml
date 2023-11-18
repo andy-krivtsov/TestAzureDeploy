@@ -70,7 +70,7 @@ stages:
               containerAppName: $(containerAppName)
               containerAppEnvironment: $(containerAppEnvironment)
               ingress: external
-              targetPort: 8080
+              targetPort: 8000
 
 
 
