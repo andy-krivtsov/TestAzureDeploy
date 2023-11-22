@@ -11,7 +11,7 @@
         "type": "String"
       },
       "environmentName": {
-        "defaultValue": "DemoContainerAppEnv01",
+        "defaultValue": "MyDemoContEnv",
         "type": "String"
       },
       "containerImage": {
@@ -22,12 +22,9 @@
         "defaultValue": "akazureregistry.azurecr.io",
         "type": "SecureString"
       },
-      "registryUsername": {
-        "defaultValue": "akazureregistry",
-        "type": "SecureString"
-      },
-      "registryPassword": {
-        "type": "SecureString"
+      "identityName": {
+        "defaultValue": "DemoContainerApp",
+        "type": "String"
       }
     },
     "resources": [
@@ -37,17 +34,15 @@
         "name": "[parameters('containerappName')]",
         "location": "[parameters('location')]",
         "identity": {
-          "type": "None"
+          "type": "UserAssigned",
+          "userAssignedIdentities": {
+            "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+          }
         },
         "properties": {
           "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
           "configuration": {
-            "secrets": [
-              {
-                "name": "registrypassword",
-                "value": "[parameters('registryPassword')]"
-              }
-            ],
+            "secrets": [],
             "ingress": {
               "external": true,
               "targetPort": 8000,
@@ -63,8 +58,7 @@
             "registries": [
               {
                 "server": "[parameters('registryName')]",
-                "username": "[parameters('registryUsername')]",
-                "passwordSecretRef": "registrypassword"
+                "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
               }
             ]
           },
@@ -72,7 +66,7 @@
             "revisionSuffix": "first-revision",
             "containers": [
               {
-                "name": "demo-python",
+                "name": "[parameters('containerappName')]",
                 "image": "[parameters('containerImage')]",
                 "resources": {
                   "cpu": 0.25,
