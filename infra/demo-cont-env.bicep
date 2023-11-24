@@ -14,7 +14,7 @@ param identityName string = 'DemoContainerApp'
 
 var fullImageName = '${registryName}/${containerImage}:${containerTag}'
 var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
-var revisionSuffix = '${containerTag}-${take(commitSha, 10)}'
+var revisionSuffix = take(commitSha, 10)
 
 resource storacc 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
