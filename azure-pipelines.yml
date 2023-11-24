@@ -3,6 +3,7 @@ trigger:
   branches:
     include:
     - main
+    - dev
   tags:
     include:
     - '*'
@@ -11,15 +12,19 @@ resources:
 - repo: self
 
 variables:
-  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '580ae529-1a08-4208-8b04-a344e318b8df'
   imageRepository: 'learn/demo-python'
-  containerRegistry: 'akazureregistry.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  tag: 'latest'
-
-  # Agent VM image name
+  tag: ${{ replace(variables['Build.SourceBranchName'], 'main', 'latest') }}
+  subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
+  resourceGroup: 'AzureLearn'
+  containerAppName: 'demo-python-dev'
+  containerAppEnvironment: 'DemoContainerAppEnv01'
   vmImageName: 'ubuntu-latest'
+  location: "westeurope"
+  artifactName: 'deploy-arm-templates'
+  defaultParamsFileName: 'demo-env-default.parameters.json'
+  paramsFileName: 'demo-env.parameters.json'
 
 stages:
 - stage: Build
@@ -29,9 +34,6 @@ stages:
     displayName: Build Image
     pool:
       vmImage: $(vmImageName)
-    variables:
-      ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags') }}:
-        tag: $(Build.SourceBranchName)
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -42,3 +44,60 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
+
+    - task: PowerShell@2
+      displayName:  Generate parameters file for deployment
+      inputs:
+        targetType: inline
+        pwsh: true
+        workingDirectory: '$(Build.SourcesDirectory)/infra'
+        script: |
+          Get-Content '$(defaultParamsFileName)' | ConvertFrom-Json | ForEach-Object -Process {
+            $_.parameters.containerTag.value = '$(tag)'
+            $_.parameters.commitSha.value = '$(Build.SourceVersion)'
+            $_
+          } | ConvertTo-Json | Out-File -FilePath '$(paramsFileName)'  -Encoding utf8
+
+    - task: CopyFiles@2
+      displayName: Copy templates to artifacts
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: 'infra/**'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish artifacts
+      inputs:
+        ArtifactName: '$(artifactName)'
+
+- stage: Deploy
+  displayName: Deploy application
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy Container App
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Python-Container-App-Dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: Deploy container environment and python application
+            inputs:
+              deploymentScope: Resource Group
+              azureResourceManagerConnection: AzureServiceConnection
+              subscriptionId: $(subscriptionId)
+              action: Create Or Update Resource Group
+              resourceGroupName: $(resourceGroup)
+              location: $(location)
+              templateLocation: Linked artifact
+              csmFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/demo-cont-env.bicep'
+              csmParametersFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/$(paramsFileName)'
+              deploymentMode: Incremental
+
+
+
+
+

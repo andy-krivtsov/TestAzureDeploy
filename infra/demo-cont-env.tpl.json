@@ -1,0 +1,107 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "westeurope",
+            "type": "String"
+        },
+        "environmentName": {
+            "defaultValue": "MyDemoContEnv",
+            "type": "String"
+        },
+        "logWorkspaceName": {
+            "defaultValue": "[format('conapp-logs-{0}', uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "storageAccountName": {
+            "defaultValue": "[format('conappstor{0}', uniqueString(resourceGroup().id))]",
+            "type": "String"
+        },
+        "storageShareName": {
+            "defaultValue": "containerapps",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "shareResourceName": "[format('{0}/default/{1}', parameters('storageAccountName'), parameters('storageShareName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+
+            "properties": {
+                "accessTier": "Hot"
+            }
+        },
+
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2021-04-01",
+            "name": "[variables('shareResourceName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ]
+        },
+
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2021-12-01-preview",
+            "name": "[parameters('logWorkspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+            }
+        },
+        {
+            "type": "Microsoft.App/managedEnvironments",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('environmentName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "appLogsConfiguration": {
+                    "destination": "log-analytics",
+                    "logAnalyticsConfiguration": {
+                        "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logWorkspaceName'))).customerId]",
+                        "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logWorkspaceName')), '2015-11-01-preview').primarySharedKey]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', parameters('storageAccountName'), 'default', parameters('storageShareName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logWorkspaceName'))]"
+            ],
+            "resources": [
+                {
+                    "type": "storages",
+                    "name": "azurefiles",
+                    "apiVersion": "2022-03-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]"
+                    ],
+                    "properties": {
+                        "azureFile": {
+                            "accountName": "[parameters('storageAccountName')]",
+                            "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value]",
+                            "shareName": "[parameters('storageShareName')]",
+                            "accessMode": "ReadWrite"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

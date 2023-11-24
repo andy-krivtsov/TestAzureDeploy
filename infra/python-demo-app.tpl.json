@@ -1,0 +1,96 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "containerappName": {
+        "defaultValue": "python-demo-app",
+        "type": "String"
+      },
+      "location": {
+        "defaultValue": "westeurope",
+        "type": "String"
+      },
+      "environmentName": {
+        "defaultValue": "MyDemoContEnv",
+        "type": "String"
+      },
+      "containerImage": {
+        "defaultValue": "akazureregistry.azurecr.io/learn/demo-python:1.0.0",
+        "type": "String"
+      },
+      "registryName": {
+        "defaultValue": "akazureregistry.azurecr.io",
+        "type": "SecureString"
+      },
+      "identityName": {
+        "defaultValue": "DemoContainerApp",
+        "type": "String"
+      }
+    },
+    "resources": [
+      {
+        "apiVersion": "2022-11-01-preview",
+        "type": "Microsoft.App/containerApps",
+        "name": "[parameters('containerappName')]",
+        "location": "[parameters('location')]",
+        "identity": {
+          "type": "UserAssigned",
+          "userAssignedIdentities": {
+            "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+          }
+        },
+        "properties": {
+          "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+          "configuration": {
+            "secrets": [],
+            "ingress": {
+              "external": true,
+              "targetPort": 8000,
+              "allowInsecure": false,
+              "transport": "Auto",
+              "traffic": [
+                {
+                  "latestRevision": true,
+                  "weight": 100
+                }
+              ]
+            },
+            "registries": [
+              {
+                "server": "[parameters('registryName')]",
+                "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+              }
+            ]
+          },
+          "template": {
+            "revisionSuffix": "first-revision",
+            "containers": [
+              {
+                "name": "[parameters('containerappName')]",
+                "image": "[parameters('containerImage')]",
+                "resources": {
+                  "cpu": 0.25,
+                  "memory": "0.5Gi"
+                },
+                "probes": [
+                  {
+                    "type": "liveness",
+                    "httpGet": {
+                      "path": "/",
+                      "port": 8000
+                    },
+                    "initialDelaySeconds": 7,
+                    "periodSeconds": 3
+                  }
+                ]
+              }
+            ],
+            "scale": {
+              "minReplicas": 0,
+              "maxReplicas": 1
+            }
+          }
+        }
+      }
+    ]
+  }
