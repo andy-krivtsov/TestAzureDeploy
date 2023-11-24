@@ -17,6 +17,9 @@
         "commitSha": {
             "value": "000000"
         },
+        "buildId": {
+            "value": "00"
+        },
         "registryName": {
             "value": "akazureregistry.azurecr.io"
         },

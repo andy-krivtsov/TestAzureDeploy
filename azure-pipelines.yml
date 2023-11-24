@@ -55,6 +55,7 @@ stages:
           Get-Content '$(defaultParamsFileName)' | ConvertFrom-Json | ForEach-Object -Process {
             $_.parameters.containerTag.value = '$(tag)'
             $_.parameters.commitSha.value = '$(Build.SourceVersion)'
+            $_.parameters.buildId.value = '$(Build.BuildId)'
             $_
           } | ConvertTo-Json | Out-File -FilePath '$(paramsFileName)'  -Encoding utf8
 
