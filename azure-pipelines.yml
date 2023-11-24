@@ -2,7 +2,11 @@ trigger:
   batch: true
   branches:
     include:
+    - main
     - dev
+  tags:
+    include:
+    - '*'
 
 resources:
 - repo: self
@@ -11,7 +15,7 @@ variables:
   dockerRegistryServiceConnection: '580ae529-1a08-4208-8b04-a344e318b8df'
   imageRepository: 'learn/demo-python'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  tag: 'dev'
+  tag: ${{ replace(Build.SourceBranchName, 'main', 'latest') }}
   subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
   resourceGroup: 'AzureLearn'
   containerAppName: 'demo-python-dev'
