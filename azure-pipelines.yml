@@ -54,15 +54,6 @@ stages:
             $_
           } | ConvertTo-Json | Out-File -FilePath '$(paramsFileName)'  -Encoding utf8
 
-    - task: PowerShell@2
-      name: revsuffix
-      displayName: Generate revision suffix
-      inputs:
-        targetType: inline
-        script: |
-          $revSuffix = '$(Build.SourceVersion)'.Substring(0,10)
-          Write-Host "##vso[task.setvariable variable=revSuffix;isOutput=true]$revSuffix"
-
     - task: CopyFiles@2
       displayName: Copy templates to artifacts
       inputs:
@@ -84,8 +75,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     environment: 'Python-Container-App-Dev'
-    variables:
-      revSuffix: $[stageDependencies.Build.Build.outputs['revsuffix.revSuffix']]
     strategy:
       runOnce:
         deploy:
@@ -102,7 +91,6 @@ stages:
               templateLocation: Linked artifact
               csmFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/demo-cont-env.bicep'
               csmParametersFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/$(paramsFileName)'
-              deploymentName: 'python-app-$(revSuffix)'
               deploymentMode: Incremental
 
 
