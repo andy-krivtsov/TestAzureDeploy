@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "value": "MyDemoContEnv"
+        },
+        "containerappName": {
+            "value": "python-demo-app"
+        },
+        "containerImage": {
+            "value": "learn/demo-python"
+        },
+        "containerTag": {
+            "value": "dev"
+        },
+        "commitSha": {
+            "value": "000000"
+        },
+        "registryName": {
+            "value": "akazureregistry.azurecr.io"
+        },
+        "identityName": {
+            "value": "DemoContainerApp"
+        }
+    }
+}

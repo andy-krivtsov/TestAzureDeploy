@@ -19,6 +19,8 @@ variables:
   vmImageName: 'ubuntu-latest'
   location: "westeurope"
   artifactName: 'deploy-arm-templates'
+  defaultParamsFileName: 'demo-env-default.parameters.json'
+  paramsFileName: 'demo-env.parameters.json'
 
 stages:
 - stage: Build
@@ -38,6 +40,19 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
+
+    - task: PowerShell@2
+      displayName:  Generate parameters file for deployment
+      inputs:
+        targetType: inline
+        pwsh: true
+        workingDirectory: '$(Build.SourcesDirectory)/infra'
+        script: |
+          Get-Content '$(defaultParamsFileName)' | ConvertFrom-Json | ForEach-Object -Process {
+            $_.parameters.containerTag.value = '$(tag)'
+            $_.parameters.commitSha.value = '$(Build.SourceVersion)'
+            $_
+          } | ConvertTo-Json | Out-File -FilePath '$(paramsFileName)'  -Encoding utf8
 
     - task: CopyFiles@2
       displayName: Copy templates to artifacts
@@ -74,9 +89,9 @@ stages:
               location: $(location)
               templateLocation: Linked artifact
               csmFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/demo-cont-env.bicep'
+              csmParametersFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/$(paramsFileName)'
               deploymentName: 'python-app-$(Build.SourceVersion)'
               deploymentMode: Incremental
-
 
 
 
