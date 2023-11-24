@@ -8,24 +8,17 @@ resources:
 - repo: self
 
 variables:
-  - group: 'azure-learn-acr'
-  # Container registry service connection established during pipeline creation
-  - name: dockerRegistryServiceConnection
-    value: '580ae529-1a08-4208-8b04-a344e318b8df'
-  - name: imageRepository
-    value: 'learn/demo-python'
-  - name: dockerfilePath
-    value: '$(Build.SourcesDirectory)/Dockerfile'
-  - name: tag
-    value: 'dev'
-  - name: resourceGroup
-    value: 'AzureLearn'
-  - name: containerAppName
-    value: 'demo-python-dev'
-  - name: containerAppEnvironment
-    value: 'DemoContainerAppEnv01'
-  - name: vmImageName
-    value: 'ubuntu-latest'
+  dockerRegistryServiceConnection: '580ae529-1a08-4208-8b04-a344e318b8df'
+  imageRepository: 'learn/demo-python'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: 'dev'
+  subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
+  resourceGroup: 'AzureLearn'
+  containerAppName: 'demo-python-dev'
+  containerAppEnvironment: 'DemoContainerAppEnv01'
+  vmImageName: 'ubuntu-latest'
+  location: "westeurope"
+  artifactName: 'deploy-arm-templates'
 
 stages:
 - stage: Build
@@ -46,6 +39,18 @@ stages:
         tags: |
           $(tag)
 
+    - task: CopyFiles@2
+      displayName: Copy templates to artifacts
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: 'infra/**'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish artifacts
+      inputs:
+        ArtifactName: '$(artifactName)'
+
 - stage: Deploy
   displayName: Deploy application
   jobs:
@@ -58,19 +63,19 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: AzureContainerApps@1
-            displayName: "Deploy container app: $(containerAppName)"
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: Deploy container environment and python application
             inputs:
-              connectedServiceNameARM: AzureServiceConnection
-              resourceGroup: $(resourceGroup)
-              acrName: $(acrName)
-              acrPassword: $(acrPassword)
-              acrUsername: $(acrUsername)
-              imageToDeploy: "$(acrName).azurecr.io/$(imageRepository):1.0.0"
-              containerAppName: $(containerAppName)
-              containerAppEnvironment: $(containerAppEnvironment)
-              ingress: external
-              targetPort: 8000
+              deploymentScope: Resource Group
+              azureResourceManagerConnection: AzureServiceConnection
+              subscriptionId: $(subscriptionId)
+              action: Create Or Update Resource Group
+              resourceGroupName: $(resourceGroup)
+              location: $(location)
+              templateLocation: Linked artifact
+              csmFile: '$(Agent.BuildDirectory)/$(artifactName)/infra/demo-cont-env.bicep'
+              deploymentName: 'python-app-$(Build.SourceVersion)'
+              deploymentMode: Incremental
 
 
 

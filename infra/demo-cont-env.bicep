@@ -1,10 +1,20 @@
-metadata description = 'Creates new Container App Environment and support services'
+metadata description = 'Creates new Container App Environment, support services and demo application'
 
 param location string = resourceGroup().location
 param environmentName string = 'MyDemoContEnv'
 param logWorkspaceName string = 'conapp-logs-${uniqueString(resourceGroup().id)}'
 param storageAccountName string = 'conappstor${uniqueString(resourceGroup().id)}'
 param storageShareName string = 'containerapps'
+param containerappName string = 'python-demo-app'
+param containerImage string = 'learn/demo-python'
+param containerTag string = 'dev'
+param commitSha string = '000000'
+param registryName string = 'akazureregistry.azurecr.io'
+param identityName string = 'DemoContainerApp'
+
+var fullImageName = '${registryName}/${containerImage}:${containerTag}'
+var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
+var revisionSuffix = '${containerTag}-${commitSha}'
 
 resource storacc 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
@@ -59,6 +69,68 @@ resource appenv 'Microsoft.App/managedEnvironments@2023-05-02-preview' = {
         accountKey: storacc.listKeys().keys[0].value
         shareName: storageShareName
         accessMode: 'ReadWrite'
+      }
+    }
+  }
+}
+
+resource contapp 'Microsoft.App/containerApps@2023-05-02-preview' = {
+  name: containerappName
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identityId}' : {}
+    }
+  }
+  properties: {
+    managedEnvironmentId: appenv.id
+    configuration: {
+      ingress: {
+        external: true
+        targetPort: 8000
+        allowInsecure: false
+        transport: 'auto'
+        traffic: [
+          {
+            latestRevision: true
+            weight: 100
+          }
+        ]
+      }
+      registries: [
+        {
+          server: registryName
+          identity: identityId
+        }
+      ]
+    }
+    template: {
+      revisionSuffix: revisionSuffix
+      containers: [
+        {
+          name: containerappName
+          image: fullImageName
+          resources: {
+            cpu: '0.25'
+            memory: '0.5Gi'
+          }
+          probes: [
+            {
+              type: 'liveness'
+              httpGet: {
+                path: '/'
+                port: 8000
+              }
+              initialDelaySeconds: 7
+              periodSeconds: 3
+            }
+          ]
+        }
+      ]
+      scale: {
+        minReplicas: 0
+        maxReplicas: 1
       }
     }
   }

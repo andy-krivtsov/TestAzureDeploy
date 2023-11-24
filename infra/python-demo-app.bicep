@@ -6,7 +6,7 @@ param environmentName string = 'MyDemoContEnv'
 param containerImage string = 'learn/demo-python'
 param containerTag string = '1.0.0'
 param registryName string = 'akazureregistry.azurecr.io'
-param identityName string = 'DemoContainerApp2'
+param identityName string = 'DemoContainerApp'
 
 var fullImageName = '${registryName}/${containerImage}:${containerTag}'
 var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
