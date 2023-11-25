@@ -9,12 +9,13 @@ param containerappName string = 'python-demo-app'
 param containerImage string = 'learn/demo-python'
 param containerTag string = 'dev'
 param commitSha string = '000000'
+param buildId string = '0'
 param registryName string = 'akazureregistry.azurecr.io'
 param identityName string = 'DemoContainerApp'
 
 var fullImageName = '${registryName}/${containerImage}:${containerTag}'
 var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
-var revisionSuffix = '${containerTag}-${take(commitSha, 10)}'
+var revisionSuffix = '${buildId}-${take(commitSha, 10)}'
 
 resource storacc 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
