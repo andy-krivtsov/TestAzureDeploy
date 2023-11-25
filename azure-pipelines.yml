@@ -13,6 +13,7 @@ resources:
     - repository: devops
       type: git
       name: devops
+      ref: refs/heads/dev
 
 extends:
   template: pipelines/build-deploy-conapp.yml@devops
