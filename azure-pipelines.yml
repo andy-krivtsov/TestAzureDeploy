@@ -16,7 +16,7 @@ resources:
       ref: refs/heads/dev
 
 variables:
-   template: pipelines/globa-vars.yml@devops
+   template: pipelines/global-vars.yml@devops
 
 extends:
   template: pipelines/build-deploy-conapp.yml@devops
