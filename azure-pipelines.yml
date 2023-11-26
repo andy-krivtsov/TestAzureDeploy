@@ -34,3 +34,4 @@ extends:
     resourceGroup: ${{ variables.resourceGroup }}
     identityName: ${{ variables.identityName }}
     containerAppEnvironment: ${{ variables.containerAppEnvironment }}
+    environmentName: ${{ variables.environmentName }}
