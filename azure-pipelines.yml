@@ -19,7 +19,7 @@ variables:
   - template: pipelines/global-vars.yml@devops
 
 pool:
-  name: $(vmImageName)
+  vmImage: $(vmImageName)
 
 extends:
   template: pipelines/build-deploy-conapp.yml@devops
