@@ -28,3 +28,9 @@ extends:
     tag: dev
     registryServiceConnection: ${{ variables.registryServiceConnection }}
     armServiceConnection: ${{ variables.armServiceConnection }}
+    dockerRegistryName: ${{ variables.dockerRegistryName }}
+    subscriptionId: ${{ variables.subscriptionId }}
+    location: ${{ variables.location }}
+    resourceGroup: ${{ variables.resourceGroup }}
+    identityName: ${{ variables.identityName }}
+    containerAppEnvironment: ${{ variables.containerAppEnvironment }}
