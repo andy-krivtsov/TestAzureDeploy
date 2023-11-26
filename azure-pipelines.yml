@@ -24,3 +24,4 @@ extends:
     appName: demo-python
     tag: dev
     registryServiceConnection: ${{ variables.registryServiceConnection }}
+    armServiceConnection: ${{ variables.armServiceConnection }}
