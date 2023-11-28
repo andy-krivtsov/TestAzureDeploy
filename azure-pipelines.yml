@@ -37,4 +37,4 @@ extends:
     environmentName: ${{ variables.environmentName }}
     tfstateStorageAccount: ${{ variables.tfstateStorageAccount }}
     tfstateStorageContainer:  ${{ variables.tfstateStorageContainer }}
-    skipBuild: true
+    skipBuild: false
