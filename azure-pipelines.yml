@@ -35,3 +35,5 @@ extends:
     identityName: ${{ variables.identityName }}
     containerAppEnvironment: ${{ variables.containerAppEnvironment }}
     environmentName: ${{ variables.environmentName }}
+    tfstateStorageAccount: ${{ variables.tfstateStorageAccount }}
+    tfstateStorageContainer:  ${{ variables.tfstateStorageContainer }}
