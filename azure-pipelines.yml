@@ -24,7 +24,7 @@ pool:
 extends:
   template: pipelines/build-deploy-conapp.yml@devops
   parameters:
-    appName: demo-python
+    appName: demo-python2
     tag: dev
     registryServiceConnection: ${{ variables.registryServiceConnection }}
     armServiceConnection: ${{ variables.armServiceConnection }}
