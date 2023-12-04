@@ -21,4 +21,4 @@ app.add_middleware(
 # Path functions (API controllers)
 @app.get("/", response_class=HTMLResponse)
 async def get_root(request: Request):
-    return templates.TemplateResponse("main.html.j2", {"request": request, "name": "demo"})
+    return templates.TemplateResponse("main.html.j2", {"request": request, "name": "demo", "username": "demouser"})

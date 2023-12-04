@@ -16,25 +16,43 @@ resources:
       ref: refs/heads/dev
 
 variables:
-  - template: pipelines/global-vars.yml@devops
+  vmImageName: ubuntu-latest
+  location: westeurope
+  dockerRegistryName: akazureregistry.azurecr.io
+  registryServiceConnection: akazureregistry
+  imageNamespace: learn
+  appName: demoapp
+  tag: dev
+  armServiceConnection: AzureServiceConnection
+  subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
+  identityName: DemoContainerApp
+  resourceGroup: AzureLearn
+  deployParamsFileName: deploy.parameters.json
+  tfstateStorageAccount: aktfstate
+  tfstateStorageContainer: tfstate
+  skipBuild: false
 
 pool:
   vmImage: $(vmImageName)
 
-extends:
-  template: pipelines/build-deploy-conapp.yml@devops
-  parameters:
-    appName: demo-python2
-    tag: dev
-    registryServiceConnection: ${{ variables.registryServiceConnection }}
-    armServiceConnection: ${{ variables.armServiceConnection }}
-    dockerRegistryName: ${{ variables.dockerRegistryName }}
-    subscriptionId: ${{ variables.subscriptionId }}
-    location: ${{ variables.location }}
-    resourceGroup: ${{ variables.resourceGroup }}
-    identityName: ${{ variables.identityName }}
-    containerAppEnvironment: ${{ variables.containerAppEnvironment }}
-    environmentName: ${{ variables.environmentName }}
-    tfstateStorageAccount: ${{ variables.tfstateStorageAccount }}
-    tfstateStorageContainer:  ${{ variables.tfstateStorageContainer }}
-    skipBuild: false
+stages:
+  # Build stage
+  - stage: Build
+    displayName: Build and push stage
+
+    jobs:
+    - job: Build
+      displayName: Build Image
+      condition: eq('${{ variables.skipBuild }}', false)
+
+      steps:
+    # Build docker image step
+      - task: Docker@2
+        displayName: Build and push an image to container registry
+        inputs:
+          command: buildAndPush
+          repository: '${{ variables.imageNamespace }}/${{ variables.appName }}'
+          dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        # Service connection name (ACR connection)
+          containerRegistry: ${{ variables.registryServiceConnection }}
+          tags: ${{ variables.tag }}
