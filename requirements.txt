@@ -2,4 +2,5 @@ fastapi
 Jinja2
 pydantic
 uvicorn
+fastapi_msal
 
