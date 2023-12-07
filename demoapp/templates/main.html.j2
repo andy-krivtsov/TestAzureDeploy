@@ -21,10 +21,10 @@
           </ul>
           <div class="d-flex align-items-center justify-content-end">
           {% if username %}
-            <div class="align-middle fw-semibold text-light mx-4">Username</div>
-            <button class="btn btn-primary">Logout</button>
+            <div class="align-middle fw-semibold text-light mx-4">{{ username }}</div>
+            <a class="btn btn-primary" href="{{ logout_path }}">Logout</a>
           {% else %}
-            <button class="btn btn-primary">Login</button>
+            <a class="btn btn-primary" href="{{ login_path }}">Login</a>
           {% endif %}
           </div>
         </div>

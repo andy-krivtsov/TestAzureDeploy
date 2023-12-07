@@ -13,6 +13,7 @@
                 "demoapp.app:app",
                 "--reload"
             ],
+            "envFile": "${workspaceFolder}/.env",
             "jinja": true,
             "justMyCode": true
         },
