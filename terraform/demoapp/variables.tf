@@ -47,8 +47,7 @@ variable "containerTag" {
 }
 
 variable "revisionSuffix" {
-  default  = "dev"
-  nullable = false
+  default  = ""
   type     = string
 }
 
@@ -57,6 +56,27 @@ variable "identityName" {
   nullable = false
   type     = string
 }
+
+variable "authClientId" {
+  type     = string
+  nullable = false
+}
+
+variable "authClientSecret" {
+  type     = string
+  nullable = false
+}
+
+variable "authTenant" {
+  type     = string
+  nullable = false
+}
+
+variable "authSessionKey" {
+  type     = string
+  nullable = false
+}
+
 
 variable "customDomainHostname" {
   default  = "demoapp"

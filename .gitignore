@@ -121,6 +121,7 @@ celerybeat.pid
 
 # Environments
 .env
+*.env
 .venv
 env/
 venv/
@@ -162,3 +163,4 @@ cython_debug/
 .terraform
 *.tfstate
 *.tfstate.backup
+*.local.auto.tfvars
