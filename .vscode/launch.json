@@ -5,32 +5,64 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: FastAPI",
+            "name": "Front",
             "type": "python",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.app:app",
-                "--reload"
+                "demoapp.front:app.fastapi",
+                "--reload",
+                "--host",
+                "localhost",
+                "--port",
+                "8000"
             ],
-            "envFile": "${workspaceFolder}/.env",
+            "envFile": "${workspaceFolder}/front.env",
             "jinja": true,
-            "justMyCode": true
+            "justMyCode": true,
+            "consoleTitle": "Front"
         },
         {
-            "name": "Python: Flask",
+            "name": "Worker",
             "type": "python",
             "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "demoapp/app.py",
-                "FLASK_DEBUG": "1"
-            },
+            "module": "uvicorn",
             "args": [
-                "run"
+                "demoapp.back:app.fastapi",
+                "--reload",
+                "--host",
+                "localhost",
+                "--port",
+                "8100"
+            ],
+            "envFile": "${workspaceFolder}/back.env",
+            "jinja": true,
+            "justMyCode": true,
+            "consoleTitle": "DB-Worker"
+        },
+        {
+            "name": "Testapp",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "demoapp.testapp:app",
+                "--reload",
+                "--host",
+                "localhost",
+                "--port",
+                "8200"
             ],
             "jinja": true,
-            "justMyCode": true
+            "justMyCode": true,
+            "consoleTitle": "Testapp"
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Python: Front/Worker",
+            "configurations": [ "Front", "Worker" ],
+            "stopAll": true
         }
     ]
 }
