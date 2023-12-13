@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.front:app.fastapi",
+                "demoapp.front:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -28,7 +28,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.back:app.fastapi",
+                "demoapp.back:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -53,6 +53,7 @@
                 "--port",
                 "8200"
             ],
+            "envFile": "${workspaceFolder}/back.env",
             "jinja": true,
             "justMyCode": true,
             "consoleTitle": "Testapp"

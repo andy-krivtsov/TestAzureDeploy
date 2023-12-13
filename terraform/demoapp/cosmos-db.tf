@@ -48,3 +48,23 @@ resource "azurerm_cosmosdb_sql_container" "appDbContainer" {
     }
   }
 }
+
+data "azurerm_cosmosdb_sql_role_definition" "data_contibutor" {
+  resource_group_name = data.azurerm_resource_group.rg.name
+  account_name        = azurerm_cosmosdb_account.db_account.name
+  role_definition_id  = "00000000-0000-0000-0000-000000000002"
+}
+
+resource "azurerm_role_assignment" "db_admin" {
+  scope                = azurerm_cosmosdb_account.db_account.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+}
+
+resource "azurerm_cosmosdb_sql_role_assignment" "db_data_admin" {
+  resource_group_name = data.azurerm_resource_group.rg.name
+  account_name        = azurerm_cosmosdb_account.db_account.name
+  role_definition_id  = data.azurerm_cosmosdb_sql_role_definition.data_contibutor.id
+  principal_id        = data.azuread_service_principal.appServicePrincipal.object_id
+  scope               = azurerm_cosmosdb_account.db_account.id
+}

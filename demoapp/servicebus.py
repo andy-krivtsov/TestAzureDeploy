@@ -5,7 +5,7 @@ import asyncio
 
 from azure.identity.aio import ClientSecretCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusSender, ServiceBusReceiver
-from azure.servicebus import ServiceBusReceiveMode, ServiceBusMessage, ServiceBusReceivedMessage
+from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage
 from demoapp.models import ComponentsEnum, MessageDTO, StatusData, StatusTagEnum
 
 from demoapp.settings import AppSettings

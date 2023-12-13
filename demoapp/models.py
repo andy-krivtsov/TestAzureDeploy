@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
-import uuid
 from typing import Any, Optional
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from azure.servicebus import ServiceBusMessage, ServiceBusReceivedMessage
 
@@ -56,9 +55,18 @@ class StatusData(BaseModel):
 class MessageStatusDTO(BaseModel):
     version: int = -1
     time: datetime
-    message_id: str
-    data: Optional[str] = ""
+    message: MessageDTO
     status: dict[StatusTagEnum, bool] = {}
+
+    def set_status(self, tag: StatusTagEnum, value: bool):
+        self.status[tag] = value
+
+    @staticmethod
+    def fromMessage(message: MessageDTO, version: int = -1) -> MessageStatusDTO:
+        return MessageStatusDTO(
+            version=version,
+            time=datetime.now(timezone.utc),
+            message=message)
 
 
 class MessageStatusListDTO(BaseModel):

@@ -17,13 +17,18 @@
       function newRow(msg_info) {
         return {
           time: msg_info.time,
-          id: msg_info.message_id,
-          data: msg_info.data,
-          sent_status: msg_info.status["sent"],
-          db_status: msg_info.status["db"],
-          stor_status: msg_info.status["storage"],
+          id: msg_info.message.id,
+          data: JSON.stringify(msg_info.message.data),
+          sent_status: statusStr(msg_info.status["sent"]),
+          db_status: statusStr(msg_info.status["db"]),
+          stor_status: statusStr(msg_info.status["storage"])
         }
       }
+
+      function statusStr(status){
+        return status ? "OK" : ""
+      }
+
     </script>
   </head>
   <body>

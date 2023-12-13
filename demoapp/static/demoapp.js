@@ -54,15 +54,15 @@ async function updateTable(tableName = 'messages-table', newRowFunc) {
   const table = $(`#${tableName}`)
 
   msg_list.messages.forEach( msg_info => {
-    console.log(`Process msg: id=${msg_info.message_id}`)
+    console.log(`Process msg: id=${msg_info.message.id}`)
     console.log(msg_info)
 
-    row = table.bootstrapTable('getRowByUniqueId', msg_info.message_id)
+    row = table.bootstrapTable('getRowByUniqueId', msg_info.message.id)
     if (!row) {
       table.bootstrapTable('append', [ newRow(msg_info) ])
     } else {
       table.bootstrapTable('updateByUniqueId', {
-        id : msg_info.message_id,
+        id : msg_info.message.id,
         row: newRowFunc(msg_info),
         replace: true
       })

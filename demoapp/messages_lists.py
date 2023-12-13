@@ -12,7 +12,7 @@ class MessageList:
         self.messages.append(msg_info)
 
     def get_by_id(self, id: str) -> MessageStatusDTO:
-        return next((x for x in self.messages if x.message_id == id), None)
+        return next((x for x in self.messages if x.message.id == id), None)
 
     def get_after_version(self, last_version: int = -1) -> Iterable[MessageStatusDTO]:
         return (x for x in self.messages if x.version > last_version)

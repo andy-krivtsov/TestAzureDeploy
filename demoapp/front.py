@@ -3,56 +3,67 @@ Frontend demo application
 
 Application runs as user-facing WebApp
 '''
-from datetime import datetime, timezone
 import logging
-from typing import Annotated, cast
+from asyncio import Task, create_task
+from typing import Annotated, Any
 
-from fastapi import Query, Request, Depends
+from fastapi import FastAPI, Query, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi_msal import UserInfo
 
-from demoapp.application import DemoApp
+from demoapp.application import AppBuilder, ServiceProvider
 from demoapp.messages_lists import MessageList
 from demoapp.settings import AppSettings
-from demoapp.models import MessageDTO, ComponentsEnum, MessageStatusDTO, MessageStatusListDTO, StatusTagEnum
+from demoapp.models import MessageDTO, StatusData, ComponentsEnum, MessageStatusDTO, MessageStatusListDTO, StatusTagEnum
 from demoapp.servicebus import QueueService
-from demoapp.dependencies import app_settings, app_templates
+from demoapp.dependencies import app_settings, app_templates, global_service, optional_auth_scheme
 
-class FrontApp(DemoApp):
+status_receiver_task: Task[Any] = None
 
-    def __init__(self):
-        super().__init__(component=ComponentsEnum.front_service)
-        self.sent_list = MessageList()
-
-    async def app_init(self):
-        await super().app_init()
-        self.setup_status_receiving()
-        self.fastapi.mount("/static", StaticFiles(directory="demoapp/static"), name="static")
-
-    async def process_status_message(self, message: MessageDTO):
-        logging.info(f"Process status message: id={message.id}")
-
-        self.sent_list.update_status(
-            id=message.correlation_id,
-            tag=StatusTagEnum.sent,
-            value=True)
-
-
-app = FrontApp()
+sent_list = MessageList()
 def get_sent_list() -> MessageList:
-    return app.sent_list
+    return sent_list
 
-auth_scheme = app.optional_auth_scheme
+async def process_status_message(message: MessageDTO):
+    try:
+        status_data: StatusData = message.data
+        logging.info(f"Process: {message.model_dump_json()}")
+
+        get_sent_list().update_status(
+            id=message.correlation_id,
+            tag=status_data.tag,
+            value=status_data.value)
+    except Exception as exc:
+        logging.error(f"Exception in status message processing: {exc}")
+
+async def app_init(app: FastAPI, sp: ServiceProvider):
+    global status_receiver_task
+    settings: AppSettings = sp.get_service(AppSettings)
+
+    queue: QueueService = QueueService(settings, app.state.component)
+    sp.register(QueueService, queue)
+
+    status_receiver_task = create_task(queue.receive_messages(process_status_message,True))
+
+
+app = AppBuilder(ComponentsEnum.front_service)\
+        .with_settings(AppSettings()) \
+        .with_cors() \
+        .with_static() \
+        .with_msal() \
+        .with_user_auth() \
+        .with_init(app_init) \
+        .build()
+
+scheme = optional_auth_scheme
 
 # Path functions (API controllers)
-
-@app.fastapi.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def get_root(
         request: Request,
         settings: AppSettings = Depends(app_settings),
-        current_user: UserInfo = Depends(auth_scheme),
+        current_user: UserInfo = Depends(optional_auth_scheme()),
         templates: Jinja2Templates = Depends(app_templates)):
 
     if current_user:
@@ -69,25 +80,24 @@ async def get_root(
     })
 
 # post message to the data topic
-@app.fastapi.post("/messages/")
+@app.post("/messages/")
 async def post_message(
         request: Request,
         message: MessageDTO,
         settings: AppSettings = Depends(app_settings),
-        queue: QueueService = Depends(app.get_queue_service) ):
-
+        queue: QueueService = Depends(global_service(QueueService)),
+        sent_list: MessageList = Depends(get_sent_list)
+    ):
     logging.info(f"post_message(): Post message to the queue: {message.data}")
 
     await queue.send_message(message)
+    dto = MessageStatusDTO.fromMessage(message)
+    dto.set_status(StatusTagEnum.sent, True)
+    sent_list.append(dto)
 
-    app.sent_list.append(MessageStatusDTO(
-        time=datetime.now(timezone.utc),
-        message_id=message.id,
-        data=str(message.data)
-    ))
     return message
 
-@app.fastapi.get("/messages/", response_model=MessageStatusListDTO)
+@app.get("/messages/", response_model=MessageStatusListDTO)
 async def get_messages(
             request: Request,
             last_version: Annotated[int, Query()] = -1,

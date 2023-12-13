@@ -15,11 +15,17 @@
       });
 
       function newRow(msg_info) {
+        let status = ""
+        if (msg_info.status["received"]) { status = "Received" }
+        if (msg_info.status["db"]) { status = "Writed" }
+
+        console.log(`Status: ${status}`)
+
         return {
           time: msg_info.time,
-          id: msg_info.message_id,
-          data: msg_info.data,
-          status: msg_info.status["received"]
+          id: msg_info.message.id,
+          data: JSON.stringify(msg_info.message.data),
+          status: status
         }
       }
     </script>
