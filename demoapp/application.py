@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Type
@@ -10,11 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi_msal import MSALAuthorization, MSALClientConfig
-from demoapp.models import ComponentsEnum
+from fastapi_msal import MSALAuthorization
+from uvicorn.logging import AccessFormatter, ColourizedFormatter
 
+from demoapp.models import ComponentsEnum
+from demoapp.services.security import msal_auth_config
 from demoapp.settings import AppSettings
-from demoapp.logging import setup_logging
 
 class ServiceProvider(object):
     def __new__(cls):
@@ -31,7 +33,6 @@ class ServiceProvider(object):
 
     def get_service(self, service_type: Type) -> Any:
         return self.services.get(service_type, None)
-
 
 class AppBuilder:
     class StaticMount(BaseModel):
@@ -121,15 +122,29 @@ class AppBuilder:
         if self._app_shutdown:
             await self._app_shutdown(app, sp)
 
+def setup_logging(settings: AppSettings) -> None:
+    # Root logger
+    logger = logging.getLogger()
+    logger.handlers.clear()
+    handler = logging.StreamHandler(sys.stdout)
+    color_formatter = ColourizedFormatter(
+        fmt="{asctime} {levelprefix}{module}: {message}",
+        style="{")
 
-def msal_auth_config(settings: AppSettings) -> MSALClientConfig:
-    auth_config: MSALClientConfig = MSALClientConfig()
-    auth_config.client_id = settings.auth_client_id
-    auth_config.client_credential = settings.auth_client_secret
-    auth_config.tenant = settings.auth_tenant_id
+    handler.setFormatter(color_formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
-    auth_config.login_path = settings.auth_login_path
-    auth_config.token_path = settings.auth_token_path
-    auth_config.logout_path = settings.auth_logout_path
+    # Uvicorn loggers
+    uvicorn_root = logging.getLogger("uvicorn")
+    uvicorn_root.handlers[0].setFormatter(color_formatter)
 
-    return auth_config
+    acc_logger = logging.getLogger("uvicorn.access")
+    acc_logger.handlers[0].setFormatter(AccessFormatter(
+        fmt="{asctime} {levelprefix}{message}",
+        style="{"
+    ))
+
+    # Azure SDK loggers
+    azure_logger = logging.getLogger("azure")
+    azure_logger.setLevel(logging.WARNING)

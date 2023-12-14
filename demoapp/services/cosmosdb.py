@@ -9,10 +9,9 @@ from azure.identity.aio import ClientSecretCredential
 from azure.cosmos.aio import CosmosClient, DatabaseProxy, ContainerProxy
 
 from demoapp.settings import AppSettings
-from demoapp.models import MessageDTO
+from demoapp.models import Message
 
-
-class DbService:
+class DatabaseService:
     def __init__(self, settings: AppSettings, sessionId: str = str(uuid.uuid4())):
         self.settings = settings
         self.sessionId = sessionId
@@ -46,7 +45,7 @@ class DbService:
             self._container = self.database.get_container_client(self.settings.db_container)
         return self._container
 
-    async def write_message(self, message: MessageDTO):
+    async def write_message(self, message: Message):
         logging.info(f"Write message to DB: {message.model_dump_json()}, sessionId: {self.sessionId}")
 
         msg = message.model_dump()

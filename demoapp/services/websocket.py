@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from demoapp.models import json_default
 
 
-class WebSocketLinkManager:
+class WebSocketManager:
     def __init__(self, on_connection: Callable[[WebSocket], Awaitable[None]] = None):
         self.connections: dict[str, WebSocket] = {}
         self.on_connection = on_connection

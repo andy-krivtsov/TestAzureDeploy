@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Awaitable, Callable
 import uuid
@@ -5,14 +6,15 @@ import asyncio
 
 from azure.identity.aio import ClientSecretCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusSender, ServiceBusReceiver
-from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage
-from demoapp.models import ComponentsEnum, MessageDTO, StatusData, StatusTagEnum
+from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage, ServiceBusMessage
+from pydantic import BaseModel
+from demoapp.models import ComponentsEnum, Message, MessageStatusData, StatusMessage, StatusTagEnum
 
 from demoapp.settings import AppSettings
 
 FRONT_QUEUE_IDENTIFIER = "front-service"
 
-class QueueService:
+class MessagingService:
 
     def __init__(self, settings: AppSettings, component: ComponentsEnum):
         self.settings = settings
@@ -73,10 +75,10 @@ class QueueService:
         await self.client.close()
 
     async def send_status_message(self, tag: StatusTagEnum, value: bool, correlation_id: str = None):
-        message = MessageDTO(
+        message = StatusMessage(
             id=str(uuid.uuid4()),
             correlation_id=correlation_id,
-            data=StatusData(
+            data=MessageStatusData(
                 source=self.component,
                 tag=tag,
                 value=value
@@ -85,21 +87,21 @@ class QueueService:
         logging.info(f"Send status: source: {message.data.source}, status tag: {tag}, value: {value}")
         await self.send_message(message, True)
 
-    async def send_message(self, message: MessageDTO, status:bool = False):
+    async def send_message(self, message: Message, status:bool = False):
         logging.info(f"Send message: {message.id} to queue: { 'status' if status else 'data' }")
 
         sender = self.status_sender if status else self.sender
-        await sender.send_messages(message.toServiceBusMessage())
+        await sender.send_messages(toServiceBusMessage(message))
 
-    async def receive_messages(self, processor: Callable[[MessageDTO], Awaitable], status:bool = False):
+    async def receive_messages(self, processor: Callable[[Message], Awaitable], status:bool = False):
         try:
             receiver = self.status_receiver if status else self.receiver
             queue_msg: ServiceBusReceivedMessage = None
 
             async for queue_msg in receiver:
-                message = MessageDTO.fromServiceBusMessage(queue_msg)
+                message = fromServiceBusMessage(queue_msg)
                 if status:
-                    message.data = StatusData.model_validate(message.data)
+                    message = StatusMessage.model_validate(message.model_dump())
 
                 logging.info(f"Received message: id: {message.id} from queue: { 'status' if status else 'data' }")
                 await processor(message)
@@ -111,3 +113,19 @@ class QueueService:
         except Exception as e:
             logging.exception("Error in queue message handler")
             raise e
+
+
+def toServiceBusMessage(m: Message) -> ServiceBusMessage:
+    return ServiceBusMessage(
+        body=m.data.model_dump_json() if isinstance(m.data, BaseModel) else json.dumps(m.data),
+        content_type="application/json",
+        message_id=m.id,
+        correlation_id=m.correlation_id
+    )
+
+def fromServiceBusMessage(msg: ServiceBusReceivedMessage) -> Message:
+    return Message(
+        id=msg.message_id,
+        correlation_id=msg.correlation_id,
+        data=json.loads(next(msg.body).decode('utf-8'))
+    )
