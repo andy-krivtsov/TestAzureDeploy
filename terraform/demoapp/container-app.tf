@@ -9,7 +9,8 @@ resource "azurerm_container_app" "conapp" {
 
   depends_on = [
     time_sleep.wait_dns,
-    azurerm_servicebus_subscription.db_sub
+    azurerm_servicebus_subscription.db_sub,
+    azurerm_servicebus_subscription.stor_sub
   ]
 
   identity {

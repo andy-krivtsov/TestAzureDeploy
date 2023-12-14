@@ -9,6 +9,18 @@ resource "azurerm_storage_account" "stor" {
   access_tier              = "Hot"
 }
 
+resource "azurerm_storage_container" "stor_container" {
+  name                  = "appdata"
+  storage_account_name  = azurerm_storage_account.stor.name
+  container_access_type = "private"
+}
+
+resource "azurerm_role_assignment" "stor_writer" {
+  scope                = azurerm_storage_account.stor.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+}
+
 resource "azurerm_storage_share" "stor_share" {
   name                 = "containerapps"
   storage_account_name = azurerm_storage_account.stor.name

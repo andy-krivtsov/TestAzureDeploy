@@ -23,23 +23,42 @@
             "consoleTitle": "Front"
         },
         {
-            "name": "Worker",
+            "name": "Back-DB",
             "type": "python",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.back:app",
+                "demoapp.back_db:app",
                 "--reload",
                 "--host",
                 "localhost",
                 "--port",
                 "8100"
             ],
-            "envFile": "${workspaceFolder}/back.env",
+            "envFile": "${workspaceFolder}/back-db.env",
             "jinja": true,
             "justMyCode": true,
-            "consoleTitle": "DB-Worker"
+            "consoleTitle": "Back-DB"
         },
+        {
+            "name": "Back-Storage",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "demoapp.back_storage:app",
+                "--reload",
+                "--host",
+                "localhost",
+                "--port",
+                "8200"
+            ],
+            "envFile": "${workspaceFolder}/back-storage.env",
+            "jinja": true,
+            "justMyCode": true,
+            "consoleTitle": "Back-Storage"
+        },
+
         {
             "name": "Testapp",
             "type": "python",
@@ -51,7 +70,7 @@
                 "--host",
                 "localhost",
                 "--port",
-                "8200"
+                "8300"
             ],
             "envFile": "${workspaceFolder}/back.env",
             "jinja": true,
@@ -62,7 +81,7 @@
     "compounds": [
         {
             "name": "Python: Front/Worker",
-            "configurations": [ "Front", "Worker" ],
+            "configurations": [ "Front", "Back-DB", "Back-Storage" ],
             "stopAll": true
         }
     ]

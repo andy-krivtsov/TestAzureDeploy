@@ -35,6 +35,8 @@ class WebSocketManager:
     async def send_messages(self, data: list[BaseModel]):
         for id, con in self.connections.items():
             logging.info("WebSocket: send messages to connection=%s", id)
+            # for item in data:
+            #     logging.info(f"  >> {item.model_dump_json()}")
             await self.send_json(con, [x.model_dump() for x in data])
 
     @staticmethod

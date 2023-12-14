@@ -7,6 +7,7 @@ import asyncio
 from azure.identity.aio import ClientSecretCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusSender, ServiceBusReceiver
 from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage, ServiceBusMessage
+from azure.servicebus.exceptions import MessageLockLostError, SessionLockLostError, MessageAlreadySettled
 from pydantic import BaseModel
 from demoapp.models import ComponentsEnum, Message, MessageStatusData, StatusMessage, StatusTagEnum
 
@@ -99,14 +100,17 @@ class MessagingService:
             queue_msg: ServiceBusReceivedMessage = None
 
             async for queue_msg in receiver:
-                message = fromServiceBusMessage(queue_msg)
-                if status:
-                    message = StatusMessage.model_validate(message.model_dump())
+                try:
+                    message = fromServiceBusMessage(queue_msg)
+                    if status:
+                        message = StatusMessage.model_validate(message.model_dump())
 
-                logging.info(f"Received message: id: {message.id} from queue: { 'status' if status else 'data' }")
-                await processor(message)
+                    logging.info(f"Received message: id: {message.id} from queue: { 'status' if status else 'data' }")
+                    await processor(message)
 
-                await receiver.complete_message(queue_msg)
+                    await receiver.complete_message(queue_msg)
+                except (MessageLockLostError, SessionLockLostError, MessageAlreadySettled):
+                    logging.exception("Recoverable error in queue handler in complete_message()")
         except asyncio.CancelledError:
             logging.info("Queue receiver task canceled")
 

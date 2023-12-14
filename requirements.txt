@@ -1,7 +1,15 @@
 fastapi
 Jinja2
 pydantic
+PyYAML
+pydantic-settings
+python-dotenv
 uvicorn[standard]
 fastapi_msal
 async-signals
-
+azure-core
+azure-identity
+azure-cosmos
+azure-servicebus
+azure-storage-blob
+websockets

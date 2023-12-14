@@ -20,3 +20,6 @@ class AppSettings(BaseSettings):
     db_url: str = Field("", description="CosmosDB url")
     db_database: str = Field("", description="CosmosDB database name")
     db_container: str = Field("", description="CosmosDB container name")
+
+    storage_url: str = Field("", description="Storage account URL")
+    storage_container: str = Field("", description="Storage account container")

@@ -18,11 +18,11 @@ resource "azurerm_servicebus_subscription" "db_sub" {
   max_delivery_count = 1
 }
 
-# resource "azurerm_servicebus_queue" "queue" {
-#   name                = "${var.containerappName}-queue"
-#   namespace_id        = azurerm_servicebus_namespace.busNamespace.id
-#   default_message_ttl = "PT8H"
-# }
+resource "azurerm_servicebus_subscription" "stor_sub" {
+  name               =  "${var.containerappName}-stor-sub"
+  topic_id           = azurerm_servicebus_topic.data_topic.id
+  max_delivery_count = 1
+}
 
 resource "azurerm_servicebus_queue" "status_queue" {
   name                = "${var.containerappName}-queue-status"
@@ -38,6 +38,12 @@ resource "azurerm_role_assignment" "topic_admin" {
 
 resource "azurerm_role_assignment" "db_sub_admin" {
   scope                = azurerm_servicebus_subscription.db_sub.id
+  role_definition_name = "Azure Service Bus Data Owner"
+  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+}
+
+resource "azurerm_role_assignment" "stor_sub_admin" {
+  scope                = azurerm_servicebus_subscription.stor_sub.id
   role_definition_name = "Azure Service Bus Data Owner"
   principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
 }
