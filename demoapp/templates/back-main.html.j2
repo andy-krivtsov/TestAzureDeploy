@@ -10,8 +10,12 @@
 
     <script src="/static/demoapp.js" ></script>
     <script>
-      document.addEventListener("DOMContentLoaded", (event) => {
-        setTimeout(updateTable, 100, "messages-table", newRow);
+      const WEBSOCKET_URL = 'ws://127.0.0.1:8100/view/feed'
+
+      window.addEventListener('load', (event) => {
+        setTimeout(webSocketConnect, 0, WEBSOCKET_URL, (msg_list) => {
+          updateTable(msg_list, newRow)
+        })
       });
 
       function newRow(msg_info) {

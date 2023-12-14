@@ -3,9 +3,11 @@
         "demoapp",
         "fastapi",
         "MSAL",
+        "onchange",
         "pydantic",
         "servicebus",
         "starlette",
-        "templating"
+        "templating",
+        "uviconrn"
     ]
 }

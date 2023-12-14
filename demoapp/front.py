@@ -6,8 +6,9 @@ Application runs as user-facing WebApp
 import logging
 from asyncio import Task, create_task
 from typing import Annotated, Any
+import uuid
 
-from fastapi import FastAPI, Query, Request, Depends
+from fastapi import FastAPI, Query, Request, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_msal import UserInfo
@@ -18,25 +19,48 @@ from demoapp.settings import AppSettings
 from demoapp.models import MessageDTO, StatusData, ComponentsEnum, MessageStatusDTO, MessageStatusListDTO, StatusTagEnum
 from demoapp.servicebus import QueueService
 from demoapp.dependencies import app_settings, app_templates, global_service, optional_auth_scheme
+from demoapp.websocket import WebSocketLinkManager
 
-status_receiver_task: Task[Any] = None
-
+# Sent message list
 sent_list = MessageList()
 def get_sent_list() -> MessageList:
     return sent_list
 
+# WebSocket management and event handlers
+async def new_connect_handler(connection: WebSocket):
+    logging.info("WebSocket: sent complete list to the new connection")
+    await WebSocketLinkManager.send_json(
+        connection,
+        [ x.model_dump() for x in sent_list.messages ]
+    )
+
+view_connections = WebSocketLinkManager(on_connection=new_connect_handler)
+def get_view_connections() -> WebSocketLinkManager:
+    return view_connections
+
+# Sent list update event handler (sent event to websocket)
+async def sent_list_update_handler(sender: Any, message_info: MessageStatusDTO, **kwargs):
+    await view_connections.send_message(message_info)
+
+sent_list.on_change_connect(sent_list_update_handler)
+
+
+# Incoming Service Bus status messages processing
 async def process_status_message(message: MessageDTO):
     try:
         status_data: StatusData = message.data
-        logging.info(f"Process: {message.model_dump_json()}")
+        logging.info(f"Process status message: {message.model_dump_json()}")
 
-        get_sent_list().update_status(
+        await get_sent_list().update_status(
             id=message.correlation_id,
             tag=status_data.tag,
             value=status_data.value)
-    except Exception as exc:
-        logging.error(f"Exception in status message processing: {exc}")
 
+    except Exception as exc:
+        logging.exception("Exception %s in status message processing, id=%s, message: %s", type(exc), message.id, exc )
+
+#  Application initialization and FastAPI object
+status_receiver_task: Task[Any] = None
 async def app_init(app: FastAPI, sp: ServiceProvider):
     global status_receiver_task
     settings: AppSettings = sp.get_service(AppSettings)
@@ -93,7 +117,7 @@ async def post_message(
     await queue.send_message(message)
     dto = MessageStatusDTO.fromMessage(message)
     dto.set_status(StatusTagEnum.sent, True)
-    sent_list.append(dto)
+    await sent_list.append(dto)
 
     return message
 
@@ -108,3 +132,10 @@ async def get_messages(
         version=sent_list.version,
         messages=list(sent_list.get_after_version(last_version))
     )
+
+@app.websocket("/view/feed")
+async def view_websocket(
+            websocket: WebSocket,
+            view_connections: WebSocketLinkManager = Depends(get_view_connections)
+        ):
+    await view_connections.new_connection(websocket)

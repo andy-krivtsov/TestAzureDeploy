@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 from typing import Any, Optional
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from pydantic import BaseModel, Field
 from azure.servicebus import ServiceBusMessage, ServiceBusReceivedMessage
+
+def json_default(obj: Any) -> Any:
+    return obj.isoformat() if isinstance(obj, datetime) or isinstance(obj, date) else None
 
 class StatusTagEnum(str, Enum):
     sent     = "sent"

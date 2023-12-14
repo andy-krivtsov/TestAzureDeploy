@@ -1,6 +1,7 @@
 fastapi
 Jinja2
 pydantic
-uvicorn
+uvicorn[standard]
 fastapi_msal
+async-signals
 
