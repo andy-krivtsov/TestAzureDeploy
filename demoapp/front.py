@@ -69,6 +69,12 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
 
     status_receiver_task = create_task(msg_srv.receive_messages(process_status_message,True))
 
+async def app_shutdown(app: FastAPI, sp: ServiceProvider):
+    global status_receiver_task
+
+    msg_srv: MessagingService = sp.get_service(MessagingService)
+    status_receiver_task.cancel()
+    await msg_srv.close()
 
 app = AppBuilder(ComponentsEnum.front_service)\
         .with_settings(AppSettings()) \
@@ -77,6 +83,7 @@ app = AppBuilder(ComponentsEnum.front_service)\
         .with_msal() \
         .with_user_auth() \
         .with_init(app_init) \
+        .with_shutdown(app_shutdown) \
         .build()
 
 scheme = optional_auth_scheme

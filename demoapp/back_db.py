@@ -82,6 +82,16 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
 
     data_receiver_task = create_task(msg_srv.receive_messages(process_message))
 
+async def app_shutdown(app: FastAPI, sp: ServiceProvider):
+    global data_receiver_task
+
+    msg_srv: MessagingService = sp.get_service(MessagingService)
+    data_receiver_task.cancel()
+    await msg_srv.close()
+
+    db_srv: DatabaseService = sp.get_service(DatabaseService)
+    await db_srv.close()
+
 
 app = AppBuilder(ComponentsEnum.db_service)\
         .with_settings(AppSettings()) \
@@ -89,6 +99,7 @@ app = AppBuilder(ComponentsEnum.db_service)\
         .with_static() \
         .with_msal() \
         .with_init(app_init) \
+        .with_shutdown(app_shutdown) \
         .build()
 
 

@@ -21,12 +21,12 @@ class MessagingService:
         self.settings = settings
         self.component = component
 
-        credential = ClientSecretCredential(
+        self._credential = ClientSecretCredential(
             tenant_id=settings.auth_tenant_id,
             client_id=settings.auth_client_id,
             client_secret=settings.auth_client_secret)
 
-        self.client = ServiceBusClient(settings.servicebus_namespace, credential)
+        self._client = ServiceBusClient(settings.servicebus_namespace, self._credential)
 
         self._sender: ServiceBusSender = None
         self._status_sender: ServiceBusSender = None
@@ -34,9 +34,13 @@ class MessagingService:
         self._status_receiver: ServiceBusReceiver = None
 
     @property
+    def client(self) -> ServiceBusClient:
+        return self._client
+
+    @property
     def sender(self) -> ServiceBusSender:
         if not self._sender:
-            self._sender = self.client.get_topic_sender(
+            self._sender = self._client.get_topic_sender(
                 topic_name=self.settings.servicebus_topic,
                 client_identifier=self.component.value)
         return self._sender
@@ -44,7 +48,7 @@ class MessagingService:
     @property
     def status_sender(self) -> ServiceBusSender:
         if not self._status_sender:
-            self._status_sender = self.client.get_queue_sender(
+            self._status_sender = self._client.get_queue_sender(
                 queue_name=self.settings.servicebus_status_queue,
                 client_identifier=self.component.value)
 
@@ -53,7 +57,7 @@ class MessagingService:
     @property
     def receiver(self) -> ServiceBusReceiver:
         if not self._receiver:
-            self._receiver = self.client.get_subscription_receiver(
+            self._receiver = self._client.get_subscription_receiver(
                 topic_name=self.settings.servicebus_topic,
                 subscription_name=self.settings.servicebus_subscription,
                 receive_mode=ServiceBusReceiveMode.PEEK_LOCK,
@@ -64,7 +68,7 @@ class MessagingService:
     @property
     def status_receiver(self) -> ServiceBusReceiver:
         if not self._status_receiver:
-            self._status_receiver = self.client.get_queue_receiver(
+            self._status_receiver = self._client.get_queue_receiver(
                 queue_name=self.settings.servicebus_status_queue,
                 receive_mode=ServiceBusReceiveMode.PEEK_LOCK,
                 client_identifier=self.component.value)
@@ -73,7 +77,10 @@ class MessagingService:
 
 
     async def close(self):
-        await self.client.close()
+        if self._credential:
+            await self._credential.close()
+        if self._client:
+            await self._client.close()
 
     async def send_status_message(self, tag: StatusTagEnum, value: bool, correlation_id: str = None):
         message = StatusMessage(

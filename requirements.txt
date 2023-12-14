@@ -13,3 +13,6 @@ azure-cosmos
 azure-servicebus
 azure-storage-blob
 websockets
+itsdangerous
+python-multipart
+aiohttp

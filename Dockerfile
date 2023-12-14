@@ -13,9 +13,11 @@ RUN apt update \
 COPY /requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
-COPY /demoapp /app/
+COPY /demoapp /demoapp/
 
 EXPOSE 8000/tcp
 
-CMD ["/usr/local/bin/uvicorn", "--host", "0.0.0.0", "app.app:app"]
+ENTRYPOINT [ "/usr/local/bin/uvicorn" ]
+
+CMD ["--host", "0.0.0.0", "demoapp.front:app"]
 

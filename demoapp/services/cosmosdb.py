@@ -16,18 +16,21 @@ class DatabaseService:
         self.settings = settings
         self.sessionId = sessionId
 
-        credential = ClientSecretCredential(
+        self._credential = ClientSecretCredential(
             tenant_id=settings.auth_tenant_id,
             client_id=settings.auth_client_id,
             client_secret=settings.auth_client_secret)
 
-        self._client = CosmosClient(url=settings.db_url, credential=credential)  # type: ignore
+        self._client = CosmosClient(url=settings.db_url, credential=self._credential)  # type: ignore
 
         self._database: DatabaseProxy = None
         self._container: ContainerProxy = None
 
     async def close(self):
-        await self._client.close()
+        if self._credential:
+            await self._credential.close()
+        if self._client:
+            await self._client.close()
 
     @property
     def client(self) -> CosmosClient:

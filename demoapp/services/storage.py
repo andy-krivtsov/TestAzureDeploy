@@ -13,17 +13,24 @@ class StorageService:
     def __init__(self, settings: AppSettings):
         self.settings = settings
 
-        credential = ClientSecretCredential(
+        self._credential = ClientSecretCredential(
             tenant_id=settings.auth_tenant_id,
             client_id=settings.auth_client_id,
             client_secret=settings.auth_client_secret)
 
-        self.client = BlobServiceClient(
+        self._client = BlobServiceClient(
             account_url=settings.storage_url,
-            credential=credential)
+            credential=self._credential)
 
     async def close(self):
-        await self.client.close()
+        if self._credential:
+            await self._credential.close()
+        if self._client:
+            await self._client.close()
+
+    @property
+    def client(self) -> BlobServiceClient:
+        return self._client
 
     async def save_message(self, message: Message):
         logging.info("Save message: %s to blob storage", message.id)
@@ -31,7 +38,7 @@ class StorageService:
         if not message.id:
             raise ValueError("Message ID can't be None!")
 
-        blob = self.client.get_blob_client(
+        blob = self._client.get_blob_client(
             container=self.settings.storage_container,
             blob=f"{message.id}.json")
 
