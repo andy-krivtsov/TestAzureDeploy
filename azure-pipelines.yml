@@ -119,9 +119,9 @@ stages:
 
           # Terraform plan
           - task: TerraformCLI@0
-            displayName: 'Terraform plan'
+            displayName: 'Terraform apply'
             inputs:
-              command: plan
+              command: apply
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
               environmentServiceName: ${{ variables.armServiceConnection }}
 
