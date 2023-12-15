@@ -87,3 +87,8 @@ venv/
 
 # VS Code
 .vscode/
+
+.terraform
+*.tfstate
+*.tfstate.backup
+*.local.auto.tfvars
