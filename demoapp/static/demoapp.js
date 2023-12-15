@@ -1,6 +1,13 @@
 const API_PATH = '/messages/'
+const WS_PATH = '/view/feed'
+
 const REFRESH_DELAY = 1000
 let last_version = null
+
+function getWebSocketUrl() {
+  scheme = window.location.protocol == "https" ? "wss://" : "ws://"
+  return scheme + window.location.host + WS_PATH
+}
 
 async function sendMessage(msg) {
   const response = await fetch(API_PATH, {

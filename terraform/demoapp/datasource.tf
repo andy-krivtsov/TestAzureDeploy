@@ -32,3 +32,15 @@ resource "random_id" "deploy_id" {
   }
   byte_length = 4
 }
+
+data "azurerm_key_vault" "secretsVault" {
+  name                = var.secretsKeyVaultName
+  resource_group_name = var.secretsKeyVaultRG
+}
+
+# Vault secrets by app secret name (ex. vaultSecrets['auth_client_id'])
+data "azurerm_key_vault_secret" "vaultSecrets" {
+  for_each     = var.appKeyvaultSecrets
+  name         = each.value
+  key_vault_id = data.azurerm_key_vault.secretsVault.id
+}

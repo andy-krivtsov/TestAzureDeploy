@@ -1,32 +1,38 @@
+variable "namePrefix" {
+  default  = "demoapp"
+  nullable = false
+  type     = string
+}
+
 variable "resourceGroupName" {
   default  = "AzureLearn"
   nullable = false
   type     = string
 }
 
-variable "storageAccountPrefix" {
-  default  = "conappstor"
-  nullable = false
-  type     = string
-}
+# variable "storageAccountPrefix" {
+#   default  = "conappstor"
+#   nullable = false
+#   type     = string
+# }
 
-variable "logWorkspacePrefix" {
-  default  = "conapp-logs-"
-  nullable = false
-  type     = string
-}
+# variable "logWorkspacePrefix" {
+#   default  = "conapp-logs-"
+#   nullable = false
+#   type     = string
+# }
 
-variable "environmentName" {
-  default  = "demo-app-env"
-  nullable = false
-  type     = string
-}
+# variable "environmentName" {
+#   default  = "demo-app-env"
+#   nullable = false
+#   type     = string
+# }
 
-variable "containerappName" {
-  default  = "demoapp"
-  nullable = false
-  type     = string
-}
+# variable "containerappName" {
+#   default  = "demoapp"
+#   nullable = false
+#   type     = string
+# }
 
 variable "registryName" {
   default  = "akazureregistry.azurecr.io"
@@ -77,13 +83,6 @@ variable "authSessionKey" {
   nullable = false
 }
 
-
-variable "customDomainHostname" {
-  default  = "demoapp"
-  nullable = false
-  type     = string
-}
-
 variable "customDnsZone" {
   default  = "az.mechlab.net"
   nullable = false
@@ -95,7 +94,6 @@ variable "customDnsZoneRG" {
   nullable = false
   type     = string
 }
-
 
 variable "certKeyVaultName" {
   default  = "ak-certs-vault"
@@ -115,3 +113,22 @@ variable "certKeyVaultKey" {
   type     = string
 }
 
+variable "secretsKeyVaultName" {
+  default  = "ak-learn-vault"
+  type     = string
+}
+
+variable "secretsKeyVaultRG" {
+  default  = "AzureLearn"
+  type     = string
+}
+
+variable "appKeyvaultSecrets" {
+    type = map(string)
+    default = {
+      auth-client-id = "demoapp-client-id"
+      auth-client-secret = "demoapp-client-secret"
+      auth-tenant-id = "demoapp-tenant-id"
+      auth-session-key = "demoapp-session-key"
+    }
+}

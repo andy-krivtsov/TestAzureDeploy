@@ -1,6 +1,6 @@
 # Container environment and support services
 resource "azurerm_storage_account" "stor" {
-  name                     = "${var.storageAccountPrefix}${random_id.deploy_id.hex}"
+  name                     = "${var.namePrefix}stor${random_id.deploy_id.hex}"
   resource_group_name      = data.azurerm_resource_group.rg.name
   location                 = data.azurerm_resource_group.rg.location
   account_kind             = "StorageV2"
@@ -28,7 +28,7 @@ resource "azurerm_storage_share" "stor_share" {
 }
 
 resource "azurerm_log_analytics_workspace" "logs" {
-  name                = "${var.logWorkspacePrefix}${random_id.deploy_id.hex}"
+  name                = "${var.namePrefix}-log-${random_id.deploy_id.hex}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   sku                 = "PerGB2018"
@@ -36,7 +36,7 @@ resource "azurerm_log_analytics_workspace" "logs" {
 }
 
 resource "azurerm_container_app_environment" "conapp_env" {
-  name                       = var.environmentName
+  name                       = "${var.namePrefix}-env"
   resource_group_name        = data.azurerm_resource_group.rg.name
   location                   = data.azurerm_resource_group.rg.location
   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id

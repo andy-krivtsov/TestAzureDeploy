@@ -1,105 +1,71 @@
 
-# User-facing Container App
+# UserContainer Apps
 
-resource "azurerm_container_app" "conapp" {
-  name                         = var.containerappName
-  container_app_environment_id = azurerm_container_app_environment.conapp_env.id
-  resource_group_name          = data.azurerm_resource_group.rg.name
-  revision_mode                = "Single"
-
-  depends_on = [
-    time_sleep.wait_dns,
-    azurerm_servicebus_subscription.db_sub,
-    azurerm_servicebus_subscription.stor_sub
-  ]
-
-  identity {
-    type = "UserAssigned"
-    identity_ids = [
-      data.azurerm_user_assigned_identity.appIdentity.id
-    ]
+locals {
+  app_secrets = {
+    auth-client-id     = data.azurerm_key_vault_secret.vaultSecrets["auth-client-id"].value
+    auth-client-secret = data.azurerm_key_vault_secret.vaultSecrets["auth-client-secret"].value
+    auth-tenant-id     = data.azurerm_key_vault_secret.vaultSecrets["auth-tenant-id"].value
+    auth-session-key   = data.azurerm_key_vault_secret.vaultSecrets["auth-session-key"].value
   }
 
-  secret {
-    name  = "client-id"
-    value = var.authClientId
+  app_env_secrets = {
+    AUTH_CLIENT_ID     = "auth_client_id"
+    AUTH_CLIENT_SECRET = "auth_client_secret"
+    AUTH_TENANT_ID     = "auth_tenant_id"
+    AUTH_SESSION_KEY   = "auth_session_key"
   }
 
-  secret {
-    name  = "client-secret"
-    value = var.authClientSecret
+  app_env = {
+    SERVICEBUS_NAMESPACE    = "${azurerm_servicebus_namespace.busNamespace.name}.servicebus.windows.net"
+    SERVICEBUS_TOPIC        = azurerm_servicebus_topic.data_topic.name
+    SERVICEBUS_STATUS_QUEUE = azurerm_servicebus_queue.status_queue.name
+    DB_URL                  = azurerm_cosmosdb_account.db_account.endpoint
+    DB_DATABASE             = azurerm_cosmosdb_sql_database.appDb.name
+    DB_CONTAINER            = azurerm_cosmosdb_sql_container.appDbContainer.name
+    STORAGE_URL             = azurerm_storage_account.stor.primary_blob_endpoint
+    STORAGE_CONTAINER       = azurerm_storage_container.stor_container.name
   }
 
-  secret {
-    name  = "tenant"
-    value = var.authClientSecret
-  }
-
-  secret {
-    name  = "session-key"
-    value = var.authSessionKey
-  }
-
-  ingress {
-    external_enabled           = true
-    target_port                = 8000
-    allow_insecure_connections = false
-    transport                  = "auto"
-    traffic_weight {
-      latest_revision = true
-      percentage      = 100
+  app_list = {
+    "front" = {
+      args = [ "--host", "0.0.0.0", "demoapp.front:app" ]
+      envs = { SERVICEBUS_SUBSCRIPTION = "" }
     }
-    custom_domain {
-      certificate_binding_type = "SniEnabled"
-      certificate_id           = azurerm_container_app_environment_certificate.appCert.id
-      name                     = "${var.containerappName}.${var.customDnsZone}"
+    "backdb" = {
+      args = [ "--host", "0.0.0.0", "demoapp.back_db:app" ]
+      envs = { SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.db_sub.name }
+    }
+    "backstor" = {
+      args = [ "--host", "0.0.0.0", "demoapp.back_storage:app" ]
+      envs = { SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.stor_sub.name }
     }
   }
+}
 
-  registry {
-    server   = var.registryName
-    identity = data.azurerm_user_assigned_identity.appIdentity.id
-  }
+module "container_app" {
+  source = "./modules/container-app"
 
-  template {
-    revision_suffix = var.revisionSuffix
-    min_replicas    = 0
-    max_replicas    = 1
-    container {
-      name   = var.containerappName
-      image  = local.fullImageName
-      cpu    = 0.25
-      memory = "0.5Gi"
+  for_each = local.app_list
 
-      env {
-        name = "AUTH_CLIENT_ID"
-        secret_name = "client-id"
-      }
+  containerappName = each.key
 
-      env {
-        name = "AUTH_CLIENT_SECRET"
-        secret_name = "client-secret"
-      }
+  containerappEnvId          = azurerm_container_app_environment.conapp_env.id
+  resourceGroupName          = data.azurerm_resource_group.rg.name
+  userAssignedIdentityId     = data.azurerm_user_assigned_identity.appIdentity.id
+  customDnsZone              = var.customDnsZone
+  customDnsZoneRG            = var.customDnsZoneRG
+  envCertificateId           = azurerm_container_app_environment_certificate.appCert.id
+  registryName               = var.registryName
+  revisionSuffix             = var.revisionSuffix
+  fullImageName              = local.fullImageName
+  containerappEnvIpAddress   = azurerm_container_app_environment.conapp_env.static_ip_address
+  customDomainVerificationId = jsondecode(data.azapi_resource.conapp_env_api.output).properties.customDomainConfiguration.customDomainVerificationId
 
-      env {
-        name = "AUTH_TENANT"
-        secret_name = "tenant"
-      }
+  container_args = each.value["args"]
 
-      env {
-        name = "AUTH_SESSION_KEY"
-        secret_name = "session-key"
-      }
-
-      liveness_probe {
-        transport        = "HTTP"
-        path             = "/"
-        port             = 8000
-        initial_delay    = 10
-        interval_seconds = 3
-      }
-    }
-  }
-
+  secrets      = local.app_secrets
+  envs_secrets = { for k, v in local.app_secrets : upper(replace(k,"-","_")) => k }
+  envs         = merge(local.app_env, each.value["envs"])
 }
 

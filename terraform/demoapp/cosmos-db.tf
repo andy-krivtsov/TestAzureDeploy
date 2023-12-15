@@ -1,5 +1,5 @@
 resource "azurerm_cosmosdb_account" "db_account" {
-  name                = "${var.containerappName}-db-${random_id.deploy_id.hex}"
+  name                = "${var.namePrefix}-db-${random_id.deploy_id.hex}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   offer_type          = "Standard"
@@ -27,13 +27,13 @@ resource "azurerm_cosmosdb_account" "db_account" {
 }
 
 resource "azurerm_cosmosdb_sql_database" "appDb" {
-  name                = "${var.containerappName}-db"
+  name                = "app-db"
   resource_group_name = data.azurerm_resource_group.rg.name
   account_name        = azurerm_cosmosdb_account.db_account.name
 }
 
 resource "azurerm_cosmosdb_sql_container" "appDbContainer" {
-  name                  = "demoapp-container"
+  name                  = "app-container"
   resource_group_name   = data.azurerm_resource_group.rg.name
   account_name          = azurerm_cosmosdb_account.db_account.name
   database_name         = azurerm_cosmosdb_sql_database.appDb.name
