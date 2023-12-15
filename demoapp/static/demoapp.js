@@ -5,7 +5,7 @@ const REFRESH_DELAY = 1000
 let last_version = null
 
 function getWebSocketUrl() {
-  scheme = window.location.protocol == "https" ? "wss://" : "ws://"
+  scheme = window.location.protocol == "https:" ? "wss://" : "ws://"
   return scheme + window.location.host + WS_PATH
 }
 
