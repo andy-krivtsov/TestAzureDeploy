@@ -28,7 +28,6 @@ variables:
   secretsKeyVaultName: ak-learn-vault
   secretsKeyVaultRG: AzureLearn
 
-  deployParamsFileName: deploy.parameters.json
   tfstateStorageAccount: aktfstate
   tfstateStorageContainer: tfstate
 
@@ -96,9 +95,9 @@ stages:
                 $json_str  = @{
                   namePrefix = '${{ variables.namePrefix }}'
                   resourceGroupName = '${{ variables.resourceGroup }}'
-                  registryName = '${{ parameters.dockerRegistryName }}'
+                  registryName = '${{ variables.dockerRegistryName }}'
                   containerImage = '${{ variables.imageNamespace }}/${{ variables.imageName }}'
-                  containerTag = '${{ parameters.tag }}'
+                  containerTag = '${{ variables.tag }}'
                   revisionSuffix = "$(Build.BuildId)-" + "$(Build.SourceVersion)".substring(0,8)
                   identityName = '${{ variables.identityName }}'
                   secretsKeyVaultName = '${{ variables.secretsKeyVaultName }}'
