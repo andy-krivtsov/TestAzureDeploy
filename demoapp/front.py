@@ -80,6 +80,7 @@ app = AppBuilder(ComponentsEnum.front_service)\
         .with_settings(AppSettings()) \
         .with_cors() \
         .with_static() \
+        .with_liveness() \
         .with_msal() \
         .with_user_auth() \
         .with_init(app_init) \

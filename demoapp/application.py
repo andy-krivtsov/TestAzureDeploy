@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Type
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -17,6 +17,9 @@ from uvicorn.logging import AccessFormatter, ColourizedFormatter
 from demoapp.models import ComponentsEnum
 from demoapp.services.security import msal_auth_config
 from demoapp.settings import AppSettings
+
+LIVENESS_PROBE_PATH = "/health/live"
+READINESS_PROBE_PATH = "/health/ready"
 
 class ServiceProvider(object):
     def __new__(cls):
@@ -34,6 +37,9 @@ class ServiceProvider(object):
     def get_service(self, service_type: Type) -> Any:
         return self.services.get(service_type, None)
 
+async def simple_liveness(request: Request) -> Any:
+    return {"status": "OK"}
+
 class AppBuilder:
     class StaticMount(BaseModel):
         path: str
@@ -50,6 +56,7 @@ class AppBuilder:
         self._user_auth = False
         self._component = component
         self._static: list[AppBuilder.StaticMount] = []
+        self._liveness: str = None
 
     def with_settings(self, settings: AppSettings) -> AppBuilder:
         self._settings = settings
@@ -79,6 +86,10 @@ class AppBuilder:
         self._static.append(AppBuilder.StaticMount(path=path, file_path=file_path, name=name))
         return self
 
+    def with_liveness(self, path=LIVENESS_PROBE_PATH) -> AppBuilder:
+        self._liveness = path
+        return self
+
     def build(self) -> FastAPI:
         sp = ServiceProvider()
 
@@ -90,6 +101,9 @@ class AppBuilder:
 
         for mount in self._static:
             app.mount(path=mount.path, app=StaticFiles(directory=mount.file_path), name=mount.name)
+
+        if self._liveness:
+            app.add_api_route(path=self._liveness, endpoint=simple_liveness)
 
         if self._cors:
             app.add_middleware(
@@ -122,6 +136,18 @@ class AppBuilder:
         if self._app_shutdown:
             await self._app_shutdown(app, sp)
 
+
+class EndpointLoggingFilter(logging.Filter):
+    def __init__(self, paths: list[str]):
+        self.paths = paths
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        for p in self.paths:
+            if record.getMessage().find(p) != -1:
+                return False
+        return True
+
+
 def setup_logging(settings: AppSettings) -> None:
     # Root logger
     logger = logging.getLogger()
@@ -144,6 +170,7 @@ def setup_logging(settings: AppSettings) -> None:
         fmt="{asctime} {levelprefix}{message}",
         style="{"
     ))
+    acc_logger.addFilter(EndpointLoggingFilter([LIVENESS_PROBE_PATH]))
 
     # Azure SDK loggers
     azure_logger = logging.getLogger("azure")

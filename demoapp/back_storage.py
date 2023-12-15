@@ -97,6 +97,7 @@ app = AppBuilder(ComponentsEnum.stor_service)\
         .with_settings(AppSettings()) \
         .with_cors() \
         .with_static() \
+        .with_liveness() \
         .with_msal() \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \

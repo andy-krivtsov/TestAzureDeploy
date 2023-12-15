@@ -77,10 +77,10 @@ resource "azurerm_container_app" "conapp" {
 
       liveness_probe {
         transport        = "HTTP"
-        path             = "/"
+        path             = "/health/live"
         port             = 8000
         initial_delay    = 10
-        interval_seconds = 3
+        interval_seconds = 10
       }
     }
   }
