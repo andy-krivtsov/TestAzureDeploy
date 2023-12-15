@@ -8,51 +8,121 @@ trigger:
     include:
     - '*'
 
-resources:
-  repositories:
-    - repository: devops
-      type: git
-      name: devops
-      ref: refs/heads/dev
-
 variables:
   vmImageName: ubuntu-latest
   location: westeurope
+  environmentName: Python-Container-App-Dev
+
   dockerRegistryName: akazureregistry.azurecr.io
   registryServiceConnection: akazureregistry
   imageNamespace: learn
-  appName: demoapp
+  imageName: demoapp
   tag: dev
+
   armServiceConnection: AzureServiceConnection
   subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
-  identityName: DemoContainerApp
+
+  namePrefix: demoapp
   resourceGroup: AzureLearn
+  identityName: DemoContainerApp
+  secretsKeyVaultName: ak-learn-vault
+  secretsKeyVaultRG: AzureLearn
+
   deployParamsFileName: deploy.parameters.json
   tfstateStorageAccount: aktfstate
   tfstateStorageContainer: tfstate
-  skipBuild: false
 
 pool:
   vmImage: $(vmImageName)
 
 stages:
-  # Build stage
-  - stage: Build
-    displayName: Build and push stage
+# Build stage
+- stage: Build
+  displayName: Build and push stage
 
-    jobs:
-    - job: Build
-      displayName: Build Image
-      condition: eq('${{ variables.skipBuild }}', false)
+  jobs:
+  - job: Build
+    displayName: Build Image
+    condition: eq('${{ variables.skipBuild }}', false)
 
-      steps:
-    # Build docker image step
-      - task: Docker@2
-        displayName: Build and push an image to container registry
-        inputs:
-          command: buildAndPush
-          repository: '${{ variables.imageNamespace }}/${{ variables.appName }}'
-          dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        # Service connection name (ACR connection)
-          containerRegistry: ${{ variables.registryServiceConnection }}
-          tags: ${{ variables.tag }}
+    steps:
+  # Build docker image step
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: '${{ variables.imageNamespace }}/${{ variables.imageName }}'
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+      # Service connection name (ACR connection)
+        containerRegistry: ${{ variables.registryServiceConnection }}
+        tags: ${{ variables.tag }}
+
+# Deployment stage
+- stage: Deploy
+  displayName: Deploy application
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy Container Apps
+
+    # Fake environment (history/tracebility only)
+    environment: '${{ variables.environmentName }}'
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Checkout to Build.SourcesDirectory
+          - checkout: self
+
+          # Install terraform latest
+          - task: TerraformInstaller@1
+            displayName: Install terraform
+
+          # Test terraform CLI
+          - task: TerraformCLI@0
+            displayName: Check terraform version
+            inputs:
+              command: version
+
+          # Generate terraform variables .auto.tfvars.json file
+          - task: PowerShell@2
+            displayName:  Generate parameters file for deployment
+            inputs:
+              targetType: inline
+              pwsh: true
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+              script: |
+                $json_str  = @{
+                  namePrefix = '${{ variables.namePrefix }}'
+                  resourceGroupName = '${{ variables.resourceGroup }}'
+                  registryName = '${{ parameters.dockerRegistryName }}'
+                  containerImage = '${{ variables.imageNamespace }}/${{ variables.imageName }}'
+                  containerTag = '${{ parameters.tag }}'
+                  revisionSuffix = "$(Build.BuildId)-" + "$(Build.SourceVersion)".substring(0,8)
+                  identityName = '${{ variables.identityName }}'
+                  secretsKeyVaultName = '${{ variables.secretsKeyVaultName }}'
+                  secretsKeyVaultRG = '${{ variables.secretsKeyVaultRG }}'
+                } | ConvertTo-Json
+                $json_str | Write-Output
+                $json_str | Out-File -FilePath 'deploy_params.auto.tfvars.json' -Encoding utf8
+
+          # Terraform init (Azure strorage backend)
+          - task: TerraformCLI@0
+            displayName: 'Terraform init'
+            inputs:
+              command: init
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+              backendType: azurerm
+              backendServiceArm: ${{ variables.armServiceConnection }}
+              backendAzureRmSubscriptionId: ${{ variables.subscriptionId }}
+              ensureBackend: false
+
+          # Terraform plan
+          - task: TerraformCLI@0
+            displayName: 'Terraform plan'
+            inputs:
+              command: plan
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+              environmentServiceName: ${{ variables.armServiceConnection }}
+

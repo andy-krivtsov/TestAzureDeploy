@@ -10,30 +10,6 @@ variable "resourceGroupName" {
   type     = string
 }
 
-# variable "storageAccountPrefix" {
-#   default  = "conappstor"
-#   nullable = false
-#   type     = string
-# }
-
-# variable "logWorkspacePrefix" {
-#   default  = "conapp-logs-"
-#   nullable = false
-#   type     = string
-# }
-
-# variable "environmentName" {
-#   default  = "demo-app-env"
-#   nullable = false
-#   type     = string
-# }
-
-# variable "containerappName" {
-#   default  = "demoapp"
-#   nullable = false
-#   type     = string
-# }
-
 variable "registryName" {
   default  = "akazureregistry.azurecr.io"
   nullable = false
@@ -61,26 +37,6 @@ variable "identityName" {
   default  = "DemoContainerApp"
   nullable = false
   type     = string
-}
-
-variable "authClientId" {
-  type     = string
-  nullable = false
-}
-
-variable "authClientSecret" {
-  type     = string
-  nullable = false
-}
-
-variable "authTenant" {
-  type     = string
-  nullable = false
-}
-
-variable "authSessionKey" {
-  type     = string
-  nullable = false
 }
 
 variable "customDnsZone" {

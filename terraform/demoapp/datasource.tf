@@ -18,7 +18,7 @@ data "azurerm_resource_group" "rg" {
 }
 
 data "azuread_service_principal" "appServicePrincipal" {
-  client_id = var.authClientId
+  client_id = data.azurerm_key_vault_secret.vaultSecrets["auth-client-id"].value
 }
 
 data "azurerm_user_assigned_identity" "appIdentity" {
