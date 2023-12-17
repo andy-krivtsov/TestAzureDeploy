@@ -18,7 +18,7 @@ resource "azurerm_storage_container" "stor_container" {
 resource "azurerm_role_assignment" "stor_writer" {
   scope                = azurerm_storage_account.stor.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+  principal_id         = azuread_service_principal.azuread_app.object_id
 }
 
 resource "azurerm_storage_share" "stor_share" {

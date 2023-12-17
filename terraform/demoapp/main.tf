@@ -35,5 +35,5 @@ provider "azurerm" {
 }
 
 locals {
-  fullImageName = "${var.registryName}/${var.containerImage}:${var.containerTag}"
+  fullImageName = "${data.azurerm_container_registry.appRegistry.login_server}/${var.containerImage}:${var.containerTag}"
 }

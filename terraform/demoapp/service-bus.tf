@@ -1,6 +1,6 @@
 # Service bus
 resource "azurerm_servicebus_namespace" "busNamespace" {
-  name                = "${var.namePrefix}-namespace"
+  name                = "${var.namePrefix}-namespace-${random_id.deploy_id.hex}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   sku                 = "Standard"
@@ -33,23 +33,23 @@ resource "azurerm_servicebus_queue" "status_queue" {
 resource "azurerm_role_assignment" "topic_admin" {
   scope                = azurerm_servicebus_topic.data_topic.id
   role_definition_name = "Azure Service Bus Data Owner"
-  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+  principal_id         = azuread_service_principal.azuread_app.object_id
 }
 
 resource "azurerm_role_assignment" "db_sub_admin" {
   scope                = azurerm_servicebus_subscription.db_sub.id
   role_definition_name = "Azure Service Bus Data Owner"
-  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+  principal_id         = azuread_service_principal.azuread_app.object_id
 }
 
 resource "azurerm_role_assignment" "stor_sub_admin" {
   scope                = azurerm_servicebus_subscription.stor_sub.id
   role_definition_name = "Azure Service Bus Data Owner"
-  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+  principal_id         = azuread_service_principal.azuread_app.object_id
 }
 
 resource "azurerm_role_assignment" "status_queue_admin" {
   scope                = azurerm_servicebus_queue.status_queue.id
   role_definition_name = "Azure Service Bus Data Owner"
-  principal_id         = data.azuread_service_principal.appServicePrincipal.object_id
+  principal_id         = azuread_service_principal.azuread_app.object_id
 }

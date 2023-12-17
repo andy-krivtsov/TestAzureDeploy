@@ -3,17 +3,10 @@
 
 locals {
   app_secrets = {
-    auth-client-id     = data.azurerm_key_vault_secret.vaultSecrets["auth-client-id"].value
-    auth-client-secret = data.azurerm_key_vault_secret.vaultSecrets["auth-client-secret"].value
-    auth-tenant-id     = data.azurerm_key_vault_secret.vaultSecrets["auth-tenant-id"].value
-    auth-session-key   = data.azurerm_key_vault_secret.vaultSecrets["auth-session-key"].value
-  }
-
-  app_env_secrets = {
-    AUTH_CLIENT_ID     = "auth_client_id"
-    AUTH_CLIENT_SECRET = "auth_client_secret"
-    AUTH_TENANT_ID     = "auth_tenant_id"
-    AUTH_SESSION_KEY   = "auth_session_key"
+    auth-client-id     = azurerm_key_vault_secret.clientId.value
+    auth-client-secret = azurerm_key_vault_secret.clientSecret.value
+    auth-tenant-id     = azurerm_key_vault_secret.tenantId.value
+    auth-session-key   = azurerm_key_vault_secret.sessionKey.value
   }
 
   app_env = {
@@ -52,11 +45,11 @@ module "container_app" {
 
   containerappEnvId          = azurerm_container_app_environment.conapp_env.id
   resourceGroupName          = data.azurerm_resource_group.rg.name
-  userAssignedIdentityId     = data.azurerm_user_assigned_identity.appIdentity.id
+  userAssignedIdentityId     = azurerm_user_assigned_identity.conapp.id
   customDnsZone              = var.customDnsZone
   customDnsZoneRG            = var.customDnsZoneRG
   envCertificateId           = azurerm_container_app_environment_certificate.appCert.id
-  registryName               = var.registryName
+  registryName               = data.azurerm_container_registry.appRegistry.login_server
   revisionSuffix             = var.revisionSuffix
   fullImageName              = local.fullImageName
   containerappEnvIpAddress   = azurerm_container_app_environment.conapp_env.static_ip_address

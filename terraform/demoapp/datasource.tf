@@ -1,3 +1,6 @@
+data "azurerm_client_config" "current" {
+}
+
 data "azurerm_key_vault" "certVault" {
   name                = var.certKeyVaultName
   resource_group_name = var.certKeyVaultRG
@@ -17,15 +20,6 @@ data "azurerm_resource_group" "rg" {
   name = var.resourceGroupName
 }
 
-data "azuread_service_principal" "appServicePrincipal" {
-  client_id = data.azurerm_key_vault_secret.vaultSecrets["auth-client-id"].value
-}
-
-data "azurerm_user_assigned_identity" "appIdentity" {
-  name                = var.identityName
-  resource_group_name = data.azurerm_resource_group.rg.name
-}
-
 resource "random_id" "deploy_id" {
   keepers = {
     rg_name = var.resourceGroupName
@@ -33,14 +27,7 @@ resource "random_id" "deploy_id" {
   byte_length = 4
 }
 
-data "azurerm_key_vault" "secretsVault" {
-  name                = var.secretsKeyVaultName
-  resource_group_name = var.secretsKeyVaultRG
-}
-
-# Vault secrets by app secret name (ex. vaultSecrets['auth_client_id'])
-data "azurerm_key_vault_secret" "vaultSecrets" {
-  for_each     = var.appKeyvaultSecrets
-  name         = each.value
-  key_vault_id = data.azurerm_key_vault.secretsVault.id
+data "azurerm_container_registry" "appRegistry" {
+  name                = var.registry
+  resource_group_name = var.registryRG
 }
