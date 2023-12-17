@@ -28,6 +28,8 @@ variables:
   tfstateStorageAccount: aktfstate
   tfstateStorageContainer: tfstate
 
+  skipBuild: false
+
 pool:
   vmImage: $(vmImageName)
 
