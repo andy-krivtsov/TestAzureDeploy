@@ -42,11 +42,16 @@ class MessageViewDTO(BaseModel):
         self.status[tag] = value
 
     @staticmethod
-    def fromMessage(message: Message, version: int = -1) -> MessageViewDTO:
-        return MessageViewDTO(
+    def fromMessage(message: Message, status: dict[StatusTagEnum, bool] = {}, version: int = -1) -> MessageViewDTO:
+        dto = MessageViewDTO(
             version=version,
             time=datetime.now(timezone.utc),
             message=message)
+
+        for k, v in status.items():
+            dto.set_status(k, v)
+
+        return dto
 
 
 class MessageViewList(BaseModel):

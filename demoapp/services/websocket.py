@@ -8,9 +8,13 @@ from demoapp.models import json_default
 
 
 class WebSocketManager:
-    def __init__(self, on_connection: Callable[[WebSocket], Awaitable[None]] = None):
+    def __init__(
+            self,
+            on_connection: Callable[[WebSocket], Awaitable[None]] = None,
+            on_received: Callable[[Any], Awaitable[None]] = None):
         self.connections: dict[str, WebSocket] = {}
         self.on_connection = on_connection
+        self.on_received = on_received
 
     async def new_connection(self, websocket: WebSocket):
         await websocket.accept()
@@ -24,7 +28,10 @@ class WebSocketManager:
 
         try:
             while True:
-                await websocket.receive_text()
+                data_text = await websocket.receive_text()
+                if self.on_received:
+                    await self.on_received(json.loads(data_text))
+
         except WebSocketDisconnect:
             logging.info("WebSocket: link disconnect: %s", id)
             del self.connections[id]

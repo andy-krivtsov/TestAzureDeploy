@@ -33,7 +33,14 @@ async def new_connect_handler(connection: WebSocket):
         [ x.model_dump() for x in sent_list.messages ]
     )
 
-view_connections = WebSocketManager(on_connection=new_connect_handler)
+view_connections = WebSocketManager(
+    on_connection=new_connect_handler,
+    on_received=lambda data: new_message(
+        message=Message.model_validate(data),
+        msg_srv=global_service(MessagingService)(),
+        sent_list=sent_list)
+)
+
 def get_view_connections() -> WebSocketManager:
     return view_connections
 
@@ -42,6 +49,16 @@ async def sent_list_update_handler(sender: Any, message_info: MessageViewDTO, **
     await view_connections.send_message(message_info)
 
 sent_list.on_change_connect(sent_list_update_handler)
+
+# New message processing
+async def new_message(message: Message, msg_srv: MessagingService, sent_list: MessageList):
+    logging.info(f"Put new message to the queue: {message.id}")
+
+    await msg_srv.send_message(message)
+    dto = MessageViewDTO.fromMessage(message, {StatusTagEnum.sent: True})
+    await sent_list.append(dto)
+
+    return message
 
 
 # Incoming Service Bus status messages processing
@@ -118,14 +135,8 @@ async def post_message(
         msg_srv: MessagingService = Depends(global_service(MessagingService)),
         sent_list: MessageList = Depends(get_sent_list)
     ):
-    logging.info(f"post_message(): Post message to the queue: {message.data}")
-
-    await msg_srv.send_message(message)
-    dto = MessageViewDTO.fromMessage(message)
-    dto.set_status(StatusTagEnum.sent, True)
-    await sent_list.append(dto)
-
-    return message
+    logging.info(f"post_message(): new message: {message.id}")
+    return await new_message(message=message, msg_srv=msg_srv, sent_list=sent_list)
 
 @app.get("/messages/", response_model=MessageViewList)
 async def get_messages(

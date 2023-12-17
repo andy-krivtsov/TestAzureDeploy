@@ -10,5 +10,6 @@
         "templating",
         "uviconrn",
         "uvicorn"
-    ]
+    ],
+    "svg.preview.background": "custom"
 }
