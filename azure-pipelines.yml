@@ -13,7 +13,7 @@ variables:
   location: westeurope
   environmentName: Python-Container-App-Dev
 
-  dockerRegistryName: akazureregistry.azurecr.io
+  dockerRegistryName: akazureregistry
   registryServiceConnection: akazureregistry
   imageNamespace: learn
   imageName: demoapp
@@ -24,9 +24,6 @@ variables:
 
   namePrefix: demoapp
   resourceGroup: AzureLearn
-  identityName: DemoContainerApp
-  secretsKeyVaultName: ak-learn-vault
-  secretsKeyVaultRG: AzureLearn
 
   tfstateStorageAccount: aktfstate
   tfstateStorageContainer: tfstate
@@ -95,13 +92,10 @@ stages:
                 $json_str  = @{
                   namePrefix = '${{ variables.namePrefix }}'
                   resourceGroupName = '${{ variables.resourceGroup }}'
-                  registryName = '${{ variables.dockerRegistryName }}'
+                  registry = '${{ variables.dockerRegistryName }}'
                   containerImage = '${{ variables.imageNamespace }}/${{ variables.imageName }}'
                   containerTag = '${{ variables.tag }}'
                   revisionSuffix = "$(Build.BuildId)-" + "$(Build.SourceVersion)".substring(0,8)
-                  identityName = '${{ variables.identityName }}'
-                  secretsKeyVaultName = '${{ variables.secretsKeyVaultName }}'
-                  secretsKeyVaultRG = '${{ variables.secretsKeyVaultRG }}'
                 } | ConvertTo-Json
                 $json_str | Write-Output
                 $json_str | Out-File -FilePath 'deploy_params.auto.tfvars.json' -Encoding utf8

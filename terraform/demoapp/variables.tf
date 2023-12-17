@@ -87,23 +87,3 @@ variable "certKeyVaultKey" {
   nullable = false
   type     = string
 }
-
-variable "secretsKeyVaultName" {
-  default = "ak-learn-vault"
-  type    = string
-}
-
-variable "secretsKeyVaultRG" {
-  default = "AzureLearn"
-  type    = string
-}
-
-variable "appKeyvaultSecrets" {
-  type = map(string)
-  default = {
-    auth-client-id     = "demoapp-client-id"
-    auth-client-secret = "demoapp-client-secret"
-    auth-tenant-id     = "demoapp-tenant-id"
-    auth-session-key   = "demoapp-session-key"
-  }
-}
