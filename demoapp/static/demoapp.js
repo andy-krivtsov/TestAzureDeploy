@@ -27,7 +27,7 @@ async function sendMessage(msg) {
     view_websocket.send(JSON.stringify(msg))
   }
 
-  await response.json()
+  //await response.json()
 }
 
 async function getMessages() {
