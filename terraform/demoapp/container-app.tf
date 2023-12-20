@@ -10,17 +10,18 @@ locals {
   }
 
   app_env = {
-    SERVICEBUS_NAMESPACE     = "${azurerm_servicebus_namespace.busNamespace.name}.servicebus.windows.net"
-    SERVICEBUS_TOPIC         = azurerm_servicebus_topic.data_topic.name
-    SERVICEBUS_STATUS_QUEUE  = azurerm_servicebus_queue.status_queue.name
-    DB_URL                   = azurerm_cosmosdb_account.db_account.endpoint
-    DB_DATABASE              = azurerm_cosmosdb_sql_database.appDb.name
-    DB_CONTAINER             = azurerm_cosmosdb_sql_container.appDbContainer.name
-    STORAGE_URL              = azurerm_storage_account.stor.primary_blob_endpoint
-    STORAGE_CONTAINER        = azurerm_storage_container.stor_container.name
-    OTEL_RESOURCE_ATTRIBUTES = "service.namespace=demoapp"
-    OTEL_TRACES_SAMPLER_ARG  = 1
-    APP_INSIGHTS_CONSTR      = azurerm_application_insights.appinsights.connection_string
+    SERVICEBUS_NAMESPACE                 = "${azurerm_servicebus_namespace.busNamespace.name}.servicebus.windows.net"
+    SERVICEBUS_TOPIC                     = azurerm_servicebus_topic.data_topic.name
+    SERVICEBUS_STATUS_QUEUE              = azurerm_servicebus_queue.status_queue.name
+    DB_URL                               = azurerm_cosmosdb_account.db_account.endpoint
+    DB_DATABASE                          = azurerm_cosmosdb_sql_database.appDb.name
+    DB_CONTAINER                         = azurerm_cosmosdb_sql_container.appDbContainer.name
+    STORAGE_URL                          = azurerm_storage_account.stor.primary_blob_endpoint
+    STORAGE_CONTAINER                    = azurerm_storage_container.stor_container.name
+    APP_INSIGHTS_CONSTR                  = azurerm_application_insights.appinsights.connection_string
+    OTEL_RESOURCE_ATTRIBUTES             = "service.namespace=demoapp"
+    OTEL_TRACES_SAMPLER_ARG              = 1
+    OTEL_EXPERIMENTAL_RESOURCE_DETECTORS = "azure_app_service"
   }
 
   app_list = {
