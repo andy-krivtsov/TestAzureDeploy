@@ -14,6 +14,7 @@ COPY /requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
 COPY /demoapp /demoapp/
+COPY /fastapi_msal /fastapi_msal
 
 EXPOSE 8000/tcp
 
