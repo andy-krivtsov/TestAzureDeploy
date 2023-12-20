@@ -27,6 +27,7 @@ variables:
 
   tfstateStorageAccount: aktfstate
   tfstateStorageContainer: tfstate
+  tfstateStorageKey: container-demoapp.tfstate
 
   skipBuild: false
 
@@ -112,6 +113,7 @@ stages:
               backendServiceArm: ${{ variables.armServiceConnection }}
               backendAzureRmSubscriptionId: ${{ variables.subscriptionId }}
               ensureBackend: false
+              backendAzureRmKey: ${{ variables.tfstateStorageKey }}
 
           # Terraform plan
           - task: TerraformCLI@0
