@@ -22,6 +22,7 @@ locals {
     OTEL_RESOURCE_ATTRIBUTES             = "service.namespace=demoapp"
     OTEL_TRACES_SAMPLER_ARG              = 1
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS = "azure_app_service"
+    OTEL_PYTHON_REQUESTS_EXCLUDED_URLS   = "/health/*"
   }
 
   app_list = {
@@ -29,16 +30,23 @@ locals {
       args = ["--host", "0.0.0.0", "demoapp.front:app"]
       envs = {
         SERVICEBUS_SUBSCRIPTION = ""
+        OTEL_SERVICE_NAME="Front"
         AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
       }
     }
     "backdb" = {
       args = ["--host", "0.0.0.0", "demoapp.back_db:app"]
-      envs = { SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.db_sub.name }
+      envs = {
+        OTEL_SERVICE_NAME="BackDB"
+        SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.db_sub.name
+      }
     }
     "backstor" = {
       args = ["--host", "0.0.0.0", "demoapp.back_storage:app"]
-      envs = { SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.stor_sub.name }
+      envs = {
+        OTEL_SERVICE_NAME="BackStorage"
+        SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.stor_sub.name
+      }
     }
   }
 }
