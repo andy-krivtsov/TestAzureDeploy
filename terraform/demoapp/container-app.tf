@@ -22,7 +22,7 @@ locals {
     OTEL_RESOURCE_ATTRIBUTES             = "service.namespace=demoapp"
     OTEL_TRACES_SAMPLER_ARG              = 1
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS = "azure_app_service"
-    OTEL_PYTHON_REQUESTS_EXCLUDED_URLS   = "/health/*"
+    OTEL_PYTHON_EXCLUDED_URLS            = "/health/*"
   }
 
   app_list = {
