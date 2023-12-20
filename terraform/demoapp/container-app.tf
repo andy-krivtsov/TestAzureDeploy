@@ -27,7 +27,10 @@ locals {
   app_list = {
     "front" = {
       args = ["--host", "0.0.0.0", "demoapp.front:app"]
-      envs = { SERVICEBUS_SUBSCRIPTION = "" }
+      envs = {
+        SERVICEBUS_SUBSCRIPTION = ""
+        AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
+      }
     }
     "backdb" = {
       args = ["--host", "0.0.0.0", "demoapp.back_db:app"]

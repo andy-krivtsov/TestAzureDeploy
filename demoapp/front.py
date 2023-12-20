@@ -142,11 +142,15 @@ async def get_root(
     else:
         username = ""
 
+    login_path = settings.auth_login_path
+    if settings.auth_public_url:
+        login_path = f"{settings.auth_login_path}?redirect_uri={settings.auth_public_url}{settings.auth_token_path}"
+
     return templates.TemplateResponse("front-main.html.j2", {
         "request": request,
         "settings": settings,
         "username": username,
-        "login_path": settings.auth_login_path,
+        "login_path": login_path,
         "logout_path": settings.auth_logout_path,
     })
 

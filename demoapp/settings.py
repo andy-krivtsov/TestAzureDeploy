@@ -11,6 +11,8 @@ class AppSettings(BaseSettings):
     auth_token_path: str = Field("/token", description="MSAL token path in app")
     auth_logout_path: str = Field("/_logout_route", description="MSAL logout path in app")
 
+    auth_public_url: str = Field("", description="Public-facing application URL (redirect URL for OpenID)")
+
     servicebus_namespace: str = Field(..., description="Service bus namespace name")
     servicebus_topic: str = Field(..., description="Service bus data topic name")
     servicebus_subscription: str = Field("", description="Service bus data topic subscription name")
