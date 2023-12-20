@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Request, WebSocket, status
 from fastapi_msal import IDTokenClaims, MSALClientConfig
 from fastapi_msal.security import MSALScheme
 from fastapi.security.base import SecurityBase
@@ -10,9 +10,9 @@ class MSALOptionalScheme(SecurityBase):
         self.scheme = scheme
         self.auth_required = auth_required
 
-    async def __call__(self, request: Request) -> IDTokenClaims:
+    async def __call__(self, request: Request = None, websocket: WebSocket = None) -> IDTokenClaims:
         try:
-            return await self.scheme(request)
+            return await self.scheme(request=request, websocket=websocket)
         except HTTPException as exc:
             if (exc.status_code == status.HTTP_401_UNAUTHORIZED) and not self.auth_required:
                 return None

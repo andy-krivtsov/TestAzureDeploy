@@ -1,6 +1,6 @@
 # DNS records for the application
 resource "azurerm_dns_a_record" "dns-record" {
-  name                = var.containerappName
+  name                = "${var.containerappName}${var.hostnameSuffix}"
   zone_name           = var.customDnsZone
   resource_group_name = var.customDnsZoneRG
   ttl                 = 60
@@ -8,7 +8,7 @@ resource "azurerm_dns_a_record" "dns-record" {
 }
 
 resource "azurerm_dns_txt_record" "dns-record" {
-  name                = "asuid.${var.containerappName}"
+  name                = "asuid.${var.containerappName}${var.hostnameSuffix}"
   zone_name           = var.customDnsZone
   resource_group_name = var.customDnsZoneRG
   ttl                 = 60

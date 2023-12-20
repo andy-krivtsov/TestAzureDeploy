@@ -4,22 +4,49 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Type
+from typing import Any, Awaitable, Callable, Optional, Type
 
-from fastapi import FastAPI, Request
+import fastapi
+#from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from opentelemetry.context.context import Context
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi_msal import MSALAuthorization
 from uvicorn.logging import AccessFormatter, ColourizedFormatter
+from azure.monitor.opentelemetry import configure_azure_monitor
+from azure.core.settings import settings
+from opentelemetry.sdk.trace import Span, SpanProcessor
+from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry import baggage
+from opentelemetry.trace import get_tracer_provider
+
 
 from demoapp.models import ComponentsEnum
 from demoapp.services.security import msal_auth_config
 from demoapp.settings import AppSettings
 
+settings.tracing_implementation = "opentelemetry"
+
 LIVENESS_PROBE_PATH = "/health/live"
 READINESS_PROBE_PATH = "/health/ready"
+
+class AppAttributes:
+    APP_MESSAGE_ID = "app.message_id"
+    APP_STATUS_MESSAGE_ID = "app.status_message_id"
+
+
+class SpanEnrichingProcessor(SpanProcessor):
+    attrs_list: list[str] = [AppAttributes.APP_MESSAGE_ID, SpanAttributes.ENDUSER_ID]
+
+    def on_start(self, span: Span, parent_context: Context | None = None) -> None:
+        super().on_start(span, parent_context)
+
+        for k,v in baggage.get_all().items():
+            if k in self.attrs_list:
+                span.set_attribute(k, str(v))
+
 
 class ServiceProvider(object):
     def __new__(cls):
@@ -37,7 +64,7 @@ class ServiceProvider(object):
     def get_service(self, service_type: Type) -> Any:
         return self.services.get(service_type, None)
 
-async def simple_liveness(request: Request) -> Any:
+async def simple_liveness(request: fastapi.Request) -> Any:
     return {"status": "OK"}
 
 class AppBuilder:
@@ -48,8 +75,8 @@ class AppBuilder:
 
     def __init__(self, component: ComponentsEnum):
         self._settings: AppSettings = None
-        self._app_init: Callable[[FastAPI, ServiceProvider], Awaitable] = None
-        self._app_shutdown: Callable[[FastAPI, ServiceProvider], Awaitable] = None
+        self._app_init: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable] = None
+        self._app_shutdown: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable] = None
 
         self._cors = False
         self._msal = False
@@ -57,16 +84,17 @@ class AppBuilder:
         self._component = component
         self._static: list[AppBuilder.StaticMount] = []
         self._liveness: str = None
+        self._appinsights = False
 
     def with_settings(self, settings: AppSettings) -> AppBuilder:
         self._settings = settings
         return self
 
-    def with_init(self, func: Callable[[FastAPI, ServiceProvider], Awaitable]) -> AppBuilder:
+    def with_init(self, func: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable]) -> AppBuilder:
         self._app_init = func
         return self
 
-    def with_shutdown(self, func: Callable[[FastAPI, ServiceProvider], Awaitable]) -> AppBuilder:
+    def with_shutdown(self, func: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable]) -> AppBuilder:
         self._app_shutdown = func
         return self
 
@@ -90,13 +118,25 @@ class AppBuilder:
         self._liveness = path
         return self
 
-    def build(self) -> FastAPI:
+    def with_appinsights(self) -> AppBuilder:
+        self._appinsights = True
+        return self
+
+    def build(self) -> fastapi.FastAPI:
         sp = ServiceProvider()
 
         if self._settings:
             sp.register(AppSettings, self._settings)
+            setup_logging(self._settings)
 
-        app = FastAPI(lifespan=self.app_lifespan)
+        if self._appinsights:
+            configure_azure_monitor(
+                connection_string=self._settings.app_insights_constr,
+                disable_offline_storage=True
+            )
+            get_tracer_provider().add_span_processor(SpanEnrichingProcessor())   # type: ignore
+
+        app = fastapi.FastAPI(lifespan=self.app_lifespan)
         app.state.component = self._component
 
         for mount in self._static:
@@ -122,11 +162,11 @@ class AppBuilder:
         return app
 
     @asynccontextmanager
-    async def app_lifespan(self, app: FastAPI):
+    async def app_lifespan(self, app: fastapi.FastAPI):
         sp = ServiceProvider()
 
-        if self._settings:
-            setup_logging(self._settings)
+        # if self._settings:
+        #     setup_logging(self._settings)
 
         if self._app_init:
             await self._app_init(app, sp)
@@ -151,7 +191,7 @@ class EndpointLoggingFilter(logging.Filter):
 def setup_logging(settings: AppSettings) -> None:
     # Root logger
     logger = logging.getLogger()
-    logger.handlers.clear()
+    #logger.handlers.clear()
     handler = logging.StreamHandler(sys.stdout)
     color_formatter = ColourizedFormatter(
         fmt="{asctime} {levelprefix}{module}: {message}",

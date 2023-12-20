@@ -4,6 +4,7 @@
         "fastapi",
         "MSAL",
         "onchange",
+        "opentelemetry",
         "pydantic",
         "servicebus",
         "starlette",

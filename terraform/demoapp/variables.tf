@@ -24,6 +24,10 @@ variable "azureadAppRegistration" {
   }
 }
 
+variable "hostnameSuffix" {
+  default  = ""
+  type     = string
+}
 
 variable "resourceGroupName" {
   default  = "AzureLearn"
@@ -87,3 +91,14 @@ variable "certKeyVaultKey" {
   nullable = false
   type     = string
 }
+
+variable "localDev" {
+  default  = false
+  type     = bool
+}
+
+variable "deployApps" {
+  default  = true
+  type     = bool
+}
+

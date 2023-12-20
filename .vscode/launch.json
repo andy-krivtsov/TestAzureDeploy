@@ -19,7 +19,7 @@
             ],
             "envFile": "${workspaceFolder}/front.env",
             "jinja": true,
-            "justMyCode": true,
+            "justMyCode": false,
             "consoleTitle": "Front"
         },
         {
@@ -37,7 +37,7 @@
             ],
             "envFile": "${workspaceFolder}/back-db.env",
             "jinja": true,
-            "justMyCode": true,
+            "justMyCode": false,
             "consoleTitle": "Back-DB"
         },
         {
@@ -55,7 +55,7 @@
             ],
             "envFile": "${workspaceFolder}/back-storage.env",
             "jinja": true,
-            "justMyCode": true,
+            "justMyCode": false,
             "consoleTitle": "Back-Storage"
         },
 
@@ -74,7 +74,7 @@
             ],
             "envFile": "${workspaceFolder}/back.env",
             "jinja": true,
-            "justMyCode": true,
+            "justMyCode": false,
             "consoleTitle": "Testapp"
         },
     ],

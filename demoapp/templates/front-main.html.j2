@@ -10,10 +10,16 @@
 
     <script src="/static/demoapp.js"></script>
     <script>
+      username = "{{ username }}"
+
       window.addEventListener('load', (event) => {
-        setTimeout(webSocketConnect, 0, getWebSocketUrl(), (msg_list) => {
-          updateTable(msg_list, newRow)
-        })
+        if (username) {
+          setTimeout(webSocketConnect, 0, getWebSocketUrl(), (msg_list) => {
+            updateTable(msg_list, newRow)
+          })
+        } else {
+          console.log("User not authenticated, do not open websocket!")
+        }
       });
 
       function newRow(msg_info) {
@@ -82,8 +88,8 @@
       </div>
       <div class="row my-2">
         <div class="col d-flex align-items-center" >
-            <div class="btn btn-primary me-3" style="width: 150px;" onclick="newMessage()" >Send Message</div>
-            <input type="text" class="form-control" id="messageText" value="New message text!"/>
+            <button class="btn btn-primary me-3" style="width: 150px;" onclick="newMessage()" {% if not username %}disabled{% endif %} >Send Message</button>
+            <input type="text" class="form-control" id="messageText" value="New message text!" {% if not username %}disabled{% endif %} />
         </div>
       </div>
       <div class="row my-2">

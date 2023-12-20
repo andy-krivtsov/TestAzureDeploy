@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping
 import uuid
 import asyncio
 
@@ -10,6 +10,8 @@ from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage, S
 from azure.servicebus.exceptions import MessageLockLostError, SessionLockLostError, MessageAlreadySettled
 from pydantic import BaseModel
 from demoapp.models import ComponentsEnum, Message, MessageStatusData, StatusMessage, StatusTagEnum
+from opentelemetry import trace, baggage, context, propagate
+
 
 from demoapp.settings import AppSettings
 
@@ -99,15 +101,34 @@ class MessagingService:
         logging.info(f"Send message: {message.id} to queue: { 'status' if status else 'data' }")
 
         sender = self.status_sender if status else self.sender
-        await sender.send_messages(toServiceBusMessage(message))
+
+        # Add trace baggage fom current runtime context
+        app_props: dict = {}
+        propagate.inject(app_props)
+
+        await sender.send_messages(toServiceBusMessage(message, {"baggage": app_props["baggage"]}))
 
     async def receive_messages(self, processor: Callable[[Message], Awaitable], status:bool = False):
         try:
             receiver = self.status_receiver if status else self.receiver
             queue_msg: ServiceBusReceivedMessage = None
 
+            ctx_token = None
+
             async for queue_msg in receiver:
                 try:
+                    # Get trace baggage fom message and inject to current runtime context
+                    remote_ctx = propagate.extract(self.to_string_dict(queue_msg.application_properties))
+                    baggage_data = dict(baggage.get_all(remote_ctx))
+
+                    if baggage_data:
+                        updated_ctx = None
+                        for k,v in baggage_data.items():
+                            updated_ctx = baggage.set_baggage(name=k, value=v, context=updated_ctx)
+
+                        ctx_token = context.attach(updated_ctx)
+
+                    # Process message
                     message = fromServiceBusMessage(queue_msg)
                     if status:
                         message = StatusMessage.model_validate(message.model_dump())
@@ -118,6 +139,10 @@ class MessagingService:
                     await receiver.complete_message(queue_msg)
                 except (MessageLockLostError, SessionLockLostError, MessageAlreadySettled):
                     logging.exception("Recoverable error in queue handler in complete_message()")
+                finally:
+                    if ctx_token:
+                        context.detach(ctx_token)
+
         except asyncio.CancelledError:
             logging.info("Queue receiver task canceled")
 
@@ -125,13 +150,22 @@ class MessagingService:
             logging.exception("Error in queue message handler")
             raise e
 
+    @staticmethod
+    def to_string_dict(src: Mapping) -> dict[str,str]:
+        ret = {}
+        for k,v in src.items():
+            nk = k.decode() if isinstance(k, bytes) else str(k)                 # type: ignore
+            nv: str = v.decode() if isinstance(v, bytes) else str(v)            # type: ignore
+            ret[nk] = nv
+        return ret
 
-def toServiceBusMessage(m: Message) -> ServiceBusMessage:
+def toServiceBusMessage(m: Message, application_properties: dict = None) -> ServiceBusMessage:
     return ServiceBusMessage(
         body=m.data.model_dump_json() if isinstance(m.data, BaseModel) else json.dumps(m.data),
         content_type="application/json",
         message_id=m.id,
-        correlation_id=m.correlation_id
+        correlation_id=m.correlation_id,
+        application_properties=application_properties or {}
     )
 
 def fromServiceBusMessage(msg: ServiceBusReceivedMessage) -> Message:

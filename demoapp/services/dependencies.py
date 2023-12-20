@@ -11,6 +11,10 @@ from demoapp.settings import AppSettings
 def global_service(service_type: Type) -> Any:
     return lambda: ServiceProvider().get_service(service_type)
 
+def require_auth_scheme() -> MSALOptionalScheme:
+    msal_auth: MSALAuthorization = global_service(MSALAuthorization)()
+    return MSALOptionalScheme(scheme=msal_auth.scheme, auth_required=True)
+
 def optional_auth_scheme() -> MSALOptionalScheme:
     msal_auth: MSALAuthorization = global_service(MSALAuthorization)()
     return MSALOptionalScheme(scheme=msal_auth.scheme, auth_required=False)

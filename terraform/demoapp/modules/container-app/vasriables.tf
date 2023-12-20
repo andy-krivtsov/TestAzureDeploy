@@ -31,6 +31,10 @@ variable "customDnsZoneRG" {
   type     = string
 }
 
+variable "hostnameSuffix" {
+  type     = string
+}
+
 variable "envCertificateId" {
   type     = string
 }

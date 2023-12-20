@@ -25,7 +25,7 @@ terraform {
     resource_group_name  = "Terraform"
     storage_account_name = "aktfstate"
     container_name       = "tfstate"
-    key                  = "container-demoapp.tfstate"
+#    key                  = "container-demoapp.tfstate"
   }
 }
 

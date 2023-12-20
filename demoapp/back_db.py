@@ -11,6 +11,10 @@ from typing import Annotated, Any
 from fastapi import FastAPI, Query, Request, Depends, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry import baggage
+from fastapi_msal.models import UserInfo
 
 from demoapp.application import AppBuilder, ServiceProvider
 from demoapp.services.messagelist import MessageList
@@ -21,13 +25,16 @@ from demoapp.models import Message, ComponentsEnum, MessageViewList, MessageView
 from demoapp.services.dependencies import app_templates
 from demoapp.services.websocket import WebSocketManager
 
+tracer = get_tracer(__name__)
+
 # Received message list
 received_list = MessageList()
 def get_received_list() -> MessageList:
     return received_list
 
 # WebSocket management and event handlers
-async def new_connect_handler(connection: WebSocket):
+async def new_connect_handler(connection: WebSocket, current_user: UserInfo = None):
+    logging.info("WebSocket: connection from user = %s", current_user.display_name if current_user else None)
     logging.info("WebSocket: sent complete list to the new connection")
     await WebSocketManager.send_json(
         connection,
@@ -47,25 +54,29 @@ received_list.on_change_connect(received_list_update_handler)
 # Incoming Service Bus  messages processing
 async def process_message(message: Message):
     try:
-        logging.info("Process data message: id=%s", message.id)
-        sp = ServiceProvider()
-        received_list = get_received_list()
+        with tracer.start_as_current_span(
+                name="BackDB: Incoming new message",
+                kind=SpanKind.SERVER):
 
-        dto = MessageViewDTO.fromMessage(message)
-        dto.set_status(StatusTagEnum.received, True)
-        await received_list.append(dto)
+            logging.info("Process data message: id=%s", message.id)
+            sp = ServiceProvider()
+            received_list = get_received_list()
 
-        db_srv: DatabaseService = sp.get_service(DatabaseService)
-        await db_srv.write_message(message)
+            dto = MessageViewDTO.fromMessage(message)
+            dto.set_status(StatusTagEnum.received, True)
+            await received_list.append(dto)
 
-        msg_srv: MessagingService = sp.get_service(MessagingService)
-        await msg_srv.send_status_message(
-            tag=StatusTagEnum.db,
-            value=True,
-            correlation_id=message.id
-        )
+            db_srv: DatabaseService = sp.get_service(DatabaseService)
+            await db_srv.write_message(message)
 
-        await received_list.update_status(message.id, StatusTagEnum.db, True)
+            msg_srv: MessagingService = sp.get_service(MessagingService)
+            await msg_srv.send_status_message(
+                tag=StatusTagEnum.db,
+                value=True,
+                correlation_id=message.id
+            )
+
+            await received_list.update_status(message.id, StatusTagEnum.db, True)
     except Exception:
         logging.exception("Exception in message processing! id=%s", message.id)
 
@@ -101,6 +112,7 @@ app = AppBuilder(ComponentsEnum.db_service)\
         .with_msal() \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \
+        .with_appinsights() \
         .build()
 
 

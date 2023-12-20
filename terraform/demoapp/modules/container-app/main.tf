@@ -38,7 +38,7 @@ resource "azurerm_container_app" "conapp" {
     custom_domain {
       certificate_binding_type = "SniEnabled"
       certificate_id           = var.envCertificateId
-      name                     = "${var.containerappName}.${var.customDnsZone}"
+      name                     = "${var.containerappName}${var.hostnameSuffix}.${var.customDnsZone}"
     }
   }
 

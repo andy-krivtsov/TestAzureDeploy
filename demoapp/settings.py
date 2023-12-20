@@ -23,3 +23,5 @@ class AppSettings(BaseSettings):
 
     storage_url: str = Field("", description="Storage account URL")
     storage_container: str = Field("", description="Storage account container")
+
+    app_insights_constr: str = Field("", description="App Insights connection string")

@@ -31,3 +31,10 @@ data "azurerm_container_registry" "appRegistry" {
   name                = var.registry
   resource_group_name = var.registryRG
 }
+
+resource "random_id" "random_suffix" {
+  keepers = {
+    time = "${timestamp()}"
+  }
+  byte_length = 4
+}

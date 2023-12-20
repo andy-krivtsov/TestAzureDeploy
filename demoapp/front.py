@@ -7,18 +7,24 @@ import logging
 from asyncio import Task, create_task
 from typing import Annotated, Any, cast
 
-from fastapi import FastAPI, Query, Request, Depends, WebSocket
+from fastapi import FastAPI, HTTPException, Query, Request, Depends, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_msal import UserInfo
+from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry import baggage
+from opentelemetry import context
 
-from demoapp.application import AppBuilder, ServiceProvider
+from demoapp.application import AppBuilder, ServiceProvider, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.settings import AppSettings
 from demoapp.models import Message, ComponentsEnum, MessageViewDTO, MessageViewList, StatusMessage, StatusTagEnum
 from demoapp.services.servicebus import MessagingService
-from demoapp.services.dependencies import app_settings, app_templates, global_service, optional_auth_scheme
+from demoapp.services.dependencies import app_settings, app_templates, global_service, optional_auth_scheme, require_auth_scheme
 from demoapp.services.websocket import WebSocketManager
+
+tracer = get_tracer(__name__)
 
 # Sent message list
 sent_list = MessageList()
@@ -26,7 +32,8 @@ def get_sent_list() -> MessageList:
     return sent_list
 
 # WebSocket management and event handlers
-async def new_connect_handler(connection: WebSocket):
+async def new_connect_handler(connection: WebSocket, current_user: UserInfo = None):
+    logging.info("WebSocket: connection from user = %s", current_user.display_name if current_user else None)
     logging.info("WebSocket: sent complete list to the new connection")
     await WebSocketManager.send_json(
         connection,
@@ -52,11 +59,21 @@ sent_list.on_change_connect(sent_list_update_handler)
 
 # New message processing
 async def new_message(message: Message, msg_srv: MessagingService, sent_list: MessageList):
-    logging.info(f"Put new message to the queue: {message.id}")
+    ctx = baggage.set_baggage(AppAttributes.APP_MESSAGE_ID, message.id)
+    ctx_token = context.attach(ctx)
+    try:
+        with tracer.start_as_current_span(
+                name="Front: New Message",
+                kind=SpanKind.SERVER,
+                attributes={AppAttributes.APP_MESSAGE_ID: message.id}):
 
-    await msg_srv.send_message(message)
-    dto = MessageViewDTO.fromMessage(message, {StatusTagEnum.sent: True})
-    await sent_list.append(dto)
+                logging.info(f"Put new message to the queue: {message.id}")
+
+                await msg_srv.send_message(message)
+                dto = MessageViewDTO.fromMessage(message, {StatusTagEnum.sent: True})
+                await sent_list.append(dto)
+    finally:
+        context.detach(ctx_token)
 
     return message
 
@@ -64,13 +81,17 @@ async def new_message(message: Message, msg_srv: MessagingService, sent_list: Me
 # Incoming Service Bus status messages processing
 async def process_status_message(message: Message):
     try:
-        status_msg = cast(StatusMessage, message)
-        logging.info(f"Process status message: {status_msg.model_dump_json()}")
+        with tracer.start_as_current_span(
+                name="Front: new status message processing",
+                kind=SpanKind.SERVER,
+                attributes={AppAttributes.APP_STATUS_MESSAGE_ID: message.id}):
+            status_msg = cast(StatusMessage, message)
+            logging.info(f"Process status message: {status_msg.model_dump_json()}")
 
-        await get_sent_list().update_status(
-            id=message.correlation_id,
-            tag=status_msg.data.tag,
-            value=status_msg.data.value)
+            await get_sent_list().update_status(
+                id=message.correlation_id,
+                tag=status_msg.data.tag,
+                value=status_msg.data.value)
 
     except Exception as exc:
         logging.exception("Exception %s in status message processing, id=%s, message: %s", type(exc), message.id, exc )
@@ -102,22 +123,24 @@ app = AppBuilder(ComponentsEnum.front_service)\
         .with_user_auth() \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \
+        .with_appinsights() \
         .build()
 
-scheme = optional_auth_scheme
+require_scheme = require_auth_scheme()
+optional_scheme = optional_auth_scheme()
 
 # Path functions (API controllers)
 @app.get("/", response_class=HTMLResponse)
 async def get_root(
         request: Request,
         settings: AppSettings = Depends(app_settings),
-        current_user: UserInfo = Depends(optional_auth_scheme()),
+        current_user: UserInfo = Depends(optional_scheme),
         templates: Jinja2Templates = Depends(app_templates)):
 
     if current_user:
         username = current_user.preferred_username
     else:
-        username = None
+        username = ""
 
     return templates.TemplateResponse("front-main.html.j2", {
         "request": request,
@@ -133,8 +156,12 @@ async def post_message(
         request: Request,
         message: Message,
         msg_srv: MessagingService = Depends(global_service(MessagingService)),
+        current_user: UserInfo = Depends(require_scheme),
         sent_list: MessageList = Depends(get_sent_list)
     ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User is unauthorized")
+
     logging.info(f"post_message(): new message: {message.id}")
     return await new_message(message=message, msg_srv=msg_srv, sent_list=sent_list)
 
@@ -142,8 +169,12 @@ async def post_message(
 async def get_messages(
             request: Request,
             last_version: Annotated[int, Query()] = -1,
+            current_user: UserInfo = Depends(require_scheme),
             sent_list: MessageList = Depends(get_sent_list)
         ) -> MessageViewList:
+
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User is unauthorized")
 
     return MessageViewList(
         version=sent_list.version,
@@ -153,6 +184,7 @@ async def get_messages(
 @app.websocket("/view/feed")
 async def view_websocket(
             websocket: WebSocket,
+            current_user: UserInfo = Depends(require_scheme),
             view_connections: WebSocketManager = Depends(get_view_connections)
         ):
-    await view_connections.new_connection(websocket)
+    await view_connections.new_connection(websocket, current_user)
