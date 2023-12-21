@@ -18,7 +18,8 @@ from fastapi_msal.models import UserInfo
 from azure.monitor.events.extension import track_event
 
 
-from demoapp.application import AppBuilder, ServiceProvider, AppAttributes
+from demoapp.service_provider import ServiceProvider
+from demoapp.application import AppBuilder, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.services.servicebus import MessagingService
 from demoapp.services.cosmosdb import DatabaseService

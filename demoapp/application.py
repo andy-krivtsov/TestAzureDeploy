@@ -23,9 +23,11 @@ from opentelemetry import baggage
 from opentelemetry.trace import get_tracer_provider
 
 
+from demoapp.service_provider import ServiceProvider
 from demoapp.models import ComponentsEnum
 from demoapp.services.security import msal_auth_config
 from demoapp.settings import AppSettings
+from demoapp.services.dependencies import app_settings
 
 settings.tracing_implementation = "opentelemetry"
 
@@ -49,25 +51,14 @@ class SpanEnrichingProcessor(SpanProcessor):
             if k in self.attrs_list:
                 span.set_attribute(k, str(v))
 
-
-class ServiceProvider(object):
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(ServiceProvider, cls).__new__(cls)
-        return cls.instance
-
-    def __init__(self):
-        if not hasattr(self, "services"):
-            self.services: dict[Type, Any] = {}
-
-    def register(self, service_type: Type, service: Any):
-        self.services[service_type] = service
-
-    def get_service(self, service_type: Type) -> Any:
-        return self.services.get(service_type, None)
-
-async def simple_liveness(request: fastapi.Request) -> Any:
-    return {"status": "OK"}
+async def simple_liveness(
+            request: fastapi.Request,
+            settings: AppSettings = fastapi.Depends(app_settings),
+        ) -> Any:
+    return {
+        "status": "OK",
+        "commit": settings.git_commit_sha
+    }
 
 class AppBuilder:
     class StaticMount(BaseModel):

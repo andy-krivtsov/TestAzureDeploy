@@ -99,6 +99,7 @@ stages:
                   containerImage = '${{ variables.imageNamespace }}/${{ variables.imageName }}'
                   containerTag = '${{ variables.tag }}'
                   revisionSuffix = "$(Build.BuildId)-" + "$(Build.SourceVersion)".substring(0,8)
+                  gitCommitSHA = "$(Build.SourceVersion)"
                 } | ConvertTo-Json
                 $json_str | Write-Output
                 $json_str | Out-File -FilePath 'deploy_params.auto.tfvars.json' -Encoding utf8

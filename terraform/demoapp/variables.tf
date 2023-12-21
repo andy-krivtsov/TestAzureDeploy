@@ -102,3 +102,7 @@ variable "deployApps" {
   type     = bool
 }
 
+variable "gitCommitSHA" {
+  default = ""
+  type    = string
+}

@@ -16,7 +16,8 @@ from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry import baggage
 from opentelemetry import context
 
-from demoapp.application import AppBuilder, ServiceProvider, AppAttributes
+from demoapp.service_provider import ServiceProvider
+from demoapp.application import AppBuilder, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.settings import AppSettings
 from demoapp.models import Message, ComponentsEnum, MessageViewDTO, MessageViewList, StatusMessage, StatusTagEnum

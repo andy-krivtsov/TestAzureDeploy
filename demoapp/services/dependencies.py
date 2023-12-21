@@ -1,7 +1,7 @@
 from typing import Any, Type
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
-from demoapp.application import ServiceProvider
+from demoapp.service_provider import ServiceProvider
 from demoapp.services.security import MSALOptionalScheme
 from fastapi_msal import MSALAuthorization
 

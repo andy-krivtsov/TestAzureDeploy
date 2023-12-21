@@ -27,3 +27,5 @@ class AppSettings(BaseSettings):
     storage_container: str = Field("", description="Storage account container")
 
     app_insights_constr: str = Field("", description="App Insights connection string")
+
+    git_commit_sha: str = Field("", description="Git commit of this build")
