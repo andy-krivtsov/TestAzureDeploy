@@ -55,6 +55,7 @@ stages:
       # Service connection name (ACR connection)
         containerRegistry: ${{ variables.registryServiceConnection }}
         tags: ${{ variables.tag }}
+        arguments: --build-arg git_commit=$(Build.SourceVersion)
 
 # Deployment stage
 - stage: Deploy

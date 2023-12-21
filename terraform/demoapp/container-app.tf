@@ -19,7 +19,6 @@ locals {
     STORAGE_URL                          = azurerm_storage_account.stor.primary_blob_endpoint
     STORAGE_CONTAINER                    = azurerm_storage_container.stor_container.name
     APP_INSIGHTS_CONSTR                  = azurerm_application_insights.appinsights.connection_string
-    GIT_COMMIT_SHA                       = var.gitCommitSHA
     OTEL_RESOURCE_ATTRIBUTES             = "service.namespace=demoapp"
     OTEL_TRACES_SAMPLER_ARG              = 1
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS = "azure_app_service"

@@ -3,6 +3,8 @@ ARG base_image_tag=3.11-slim-bookworm
 
 FROM ${base_image}:${base_image_tag}
 
+ARG git_commit
+
 RUN apt update \
     && apt -y upgrade \
     && apt -y install curl wget \
@@ -15,6 +17,8 @@ RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
 COPY /demoapp /demoapp/
 COPY /fastapi_msal /fastapi_msal
+
+ENV GIT_COMMIT_SHA=${git_commit}
 
 EXPOSE 8000/tcp
 
