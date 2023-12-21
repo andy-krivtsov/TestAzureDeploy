@@ -47,15 +47,22 @@ stages:
     steps:
   # Build docker image step
     - task: Docker@2
-      displayName: Build and push an image to container registry
+      displayName: Build the image
       inputs:
-        command: buildAndPush
+        command: build
         repository: '${{ variables.imageNamespace }}/${{ variables.imageName }}'
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-      # Service connection name (ACR connection)
         containerRegistry: ${{ variables.registryServiceConnection }}
         tags: ${{ variables.tag }}
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         arguments: --build-arg git_commit=$(Build.SourceVersion)
+
+    - task: Docker@2
+      displayName: Push the image to the registry
+      inputs:
+        command: push
+        repository: '${{ variables.imageNamespace }}/${{ variables.imageName }}'
+        containerRegistry: ${{ variables.registryServiceConnection }}
+        tags: ${{ variables.tag }}
 
 # Deployment stage
 - stage: Deploy
