@@ -121,12 +121,14 @@ class MessagingService:
                     remote_ctx = propagate.extract(self.to_string_dict(queue_msg.application_properties))
                     baggage_data = dict(baggage.get_all(remote_ctx))
 
-                    if baggage_data:
-                        updated_ctx = None
-                        for k,v in baggage_data.items():
-                            updated_ctx = baggage.set_baggage(name=k, value=v, context=updated_ctx)
+                    ctx_token = context.attach(remote_ctx)
 
-                        ctx_token = context.attach(updated_ctx)
+                    # if baggage_data:
+                    #     updated_ctx = None
+                    #     for k,v in baggage_data.items():
+                    #         updated_ctx = baggage.set_baggage(name=k, value=v, context=updated_ctx)
+
+                    #     ctx_token = context.attach(updated_ctx)
 
                     # Process message
                     message = fromServiceBusMessage(queue_msg)

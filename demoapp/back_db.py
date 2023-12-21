@@ -15,8 +15,10 @@ from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry import baggage
 from fastapi_msal.models import UserInfo
+from azure.monitor.events.extension import track_event
 
-from demoapp.application import AppBuilder, ServiceProvider
+
+from demoapp.application import AppBuilder, ServiceProvider, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.services.servicebus import MessagingService
 from demoapp.services.cosmosdb import DatabaseService
@@ -66,8 +68,12 @@ async def process_message(message: Message):
             dto.set_status(StatusTagEnum.received, True)
             await received_list.append(dto)
 
+            track_event("process.received_list_append", {AppAttributes.APP_MESSAGE_ID: message.id, AppAttributes.APP_MESSAGE_DTO: dto })
+
             db_srv: DatabaseService = sp.get_service(DatabaseService)
             await db_srv.write_message(message)
+
+            track_event("process.database_save_message", { AppAttributes.APP_MESSAGE_ID: message.id })
 
             msg_srv: MessagingService = sp.get_service(MessagingService)
             await msg_srv.send_status_message(
@@ -75,6 +81,8 @@ async def process_message(message: Message):
                 value=True,
                 correlation_id=message.id
             )
+
+            track_event("process.send_status", { AppAttributes.APP_MESSAGE_ID: message.id, AppAttributes.APP_STATUS_VALUE: True })
 
             await received_list.update_status(message.id, StatusTagEnum.db, True)
     except Exception:

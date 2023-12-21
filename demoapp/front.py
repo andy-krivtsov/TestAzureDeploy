@@ -23,6 +23,7 @@ from demoapp.models import Message, ComponentsEnum, MessageViewDTO, MessageViewL
 from demoapp.services.servicebus import MessagingService
 from demoapp.services.dependencies import app_settings, app_templates, global_service, optional_auth_scheme, require_auth_scheme
 from demoapp.services.websocket import WebSocketManager
+from demoapp.services.metrics import created_messages_counter, processed_messages_counter
 
 tracer = get_tracer(__name__)
 
@@ -72,6 +73,8 @@ async def new_message(message: Message, msg_srv: MessagingService, sent_list: Me
                 await msg_srv.send_message(message)
                 dto = MessageViewDTO.fromMessage(message, {StatusTagEnum.sent: True})
                 await sent_list.append(dto)
+
+                created_messages_counter.add(1)
     finally:
         context.detach(ctx_token)
 
@@ -79,22 +82,27 @@ async def new_message(message: Message, msg_srv: MessagingService, sent_list: Me
 
 
 # Incoming Service Bus status messages processing
-async def process_status_message(message: Message):
+async def process_status_message(status_message: Message):
     try:
         with tracer.start_as_current_span(
                 name="Front: new status message processing",
                 kind=SpanKind.SERVER,
-                attributes={AppAttributes.APP_STATUS_MESSAGE_ID: message.id}):
-            status_msg = cast(StatusMessage, message)
+                attributes={AppAttributes.APP_STATUS_MESSAGE_ID: status_message.id}):
+            status_msg = cast(StatusMessage, status_message)
             logging.info(f"Process status message: {status_msg.model_dump_json()}")
 
-            await get_sent_list().update_status(
-                id=message.correlation_id,
+            sent_list = get_sent_list()
+            await sent_list.update_status(
+                id=status_message.correlation_id,
                 tag=status_msg.data.tag,
                 value=status_msg.data.value)
 
+            message = sent_list.get_by_id(status_message.correlation_id)
+            if message.is_completed():
+                processed_messages_counter.add(1)
+
     except Exception as exc:
-        logging.exception("Exception %s in status message processing, id=%s, message: %s", type(exc), message.id, exc )
+        logging.exception("Exception %s in status message processing, id=%s, message: %s", type(exc), status_message.id, exc )
 
 #  Application initialization and FastAPI object
 status_receiver_task: Task[Any] = None

@@ -41,6 +41,11 @@ class MessageViewDTO(BaseModel):
     def set_status(self, tag: StatusTagEnum, value: bool):
         self.status[tag] = value
 
+    def is_completed(self) -> bool:
+        return (self.status.get(StatusTagEnum.sent, False) and
+                self.status.get(StatusTagEnum.db, False) and
+                self.status.get(StatusTagEnum.storage, False))
+
     @staticmethod
     def fromMessage(message: Message, status: dict[StatusTagEnum, bool] = {}, version: int = -1) -> MessageViewDTO:
         dto = MessageViewDTO(

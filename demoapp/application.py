@@ -35,6 +35,8 @@ READINESS_PROBE_PATH = "/health/ready"
 class AppAttributes:
     APP_MESSAGE_ID = "app.message_id"
     APP_STATUS_MESSAGE_ID = "app.status_message_id"
+    APP_MESSAGE_DTO = "app.message_dto"
+    APP_STATUS_VALUE = "app.status_value"
 
 
 class SpanEnrichingProcessor(SpanProcessor):
