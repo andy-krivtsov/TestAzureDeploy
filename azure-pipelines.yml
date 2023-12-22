@@ -160,9 +160,6 @@ stages:
 
     - script: |
         echo URLs: $(terraformAppUrls)
-        pytest \
-          --app-urls "$(terraformAppUrls)" \
-          --commit "$(Build.SourceVersion)" \
-          infra-tests/
+        pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
       displayName: 'Run infra tests'
       workingDirectory: $(Build.SourcesDirectory)/infra-tests
