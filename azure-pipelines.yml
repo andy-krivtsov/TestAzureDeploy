@@ -132,3 +132,41 @@ stages:
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
               environmentServiceName: ${{ variables.armServiceConnection }}
 
+          # Terraform output - get URLs of the apps
+          - task: PowerShell@2
+            name: tf_output
+            displayName:  Get URLs of the deployed apps
+            inputs:
+              targetType: inline
+              pwsh: true
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+              script: |
+                $tf_output = terraform output -json | ConvertFrom-Json
+                $urls = $tf_output.apps_url.value | Join-String -Separator ","
+                Write-Host "Application URL list: ${urls}"
+                Write-Host "##vso[task.setvariable variable=TF_APP_URLS;isoutput=true]${urls}"
+
+# Verification stage
+- stage: Verify
+  displayName: Verify deployed application
+
+  jobs:
+  - job: Verify
+    displayName: Run verification tests
+    variables:
+      terraformAppUrls: $[stageDependencies.Deploy.Deploy['tf_output.TF_APP_URLS']]
+    steps:
+    - script: |
+        pip install pytest pytest-azurepipelines
+      displayName: 'Install dependencies'
+
+    - script: |
+        echo URLs: $(terraformAppUrls)
+        # python -m pytest \
+        #   --front-url=https://front.az.mechlab.net/ \
+        #   --backdb-url=https://backdb.az.mechlab.net/ \
+        #   --backstor-url=https://backstor.az.mechlab.net/ \
+        #   --commit=$(Build.SourceVersion) \
+        #   infra-tests/
+      displayName: 'Run infra tests'
+
