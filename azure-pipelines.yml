@@ -154,7 +154,7 @@ stages:
   - job: Verify
     displayName: Run verification tests
     variables:
-      terraformAppUrls: $[stageDependencies.Deploy.Deploy['tfoutput.tf_app_urls']]
+      terraformAppUrls: $[stageDependencies.Deploy.Deploy.outputs['tfoutput.tf_app_urls']]
     steps:
     - script: |
         pip install pytest pytest-azurepipelines
