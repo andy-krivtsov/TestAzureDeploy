@@ -147,16 +147,13 @@ stages:
                 Write-Host "--vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
                 Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
-
-# Verification stage
-- stage: Verify
-  displayName: Verify deployed application
-
-  jobs:
+# Verification job
   - job: Verify
     displayName: Run verification tests
+    dependsOn: Deploy
+
     variables:
-      terraformAppUrls: $[stageDependencies.Deploy.Deploy.outputs['tfoutput.tf_app_urls']]
+      terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
     steps:
     - script: |
         pip install pytest pytest-azurepipelines
