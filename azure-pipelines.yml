@@ -144,7 +144,8 @@ stages:
                 $tf_output = terraform output -json | ConvertFrom-Json
                 $urls = $tf_output.apps_url.value | Join-String -Separator ","
                 Write-Host "Application URL list: ${urls}"
-                Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]]${urls}"
+                Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
+
 
 # Verification stage
 - stage: Verify
