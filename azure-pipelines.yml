@@ -144,7 +144,6 @@ stages:
                 $tf_output = terraform output -json | ConvertFrom-Json
                 $urls = $tf_output.apps_url.value | Join-String -Separator ","
                 Write-Host "Application URL list: ${urls}"
-                Write-Host "--vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
                 Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
 # Verification job
@@ -161,11 +160,9 @@ stages:
 
     - script: |
         echo URLs: $(terraformAppUrls)
-        # python -m pytest \
-        #   --front-url=https://front.az.mechlab.net/ \
-        #   --backdb-url=https://backdb.az.mechlab.net/ \
-        #   --backstor-url=https://backstor.az.mechlab.net/ \
-        #   --commit=$(Build.SourceVersion) \
-        #   infra-tests/
+        python -m pytest \
+          --app-urls "$(terraformAppUrls)" \
+          --commit "$(Build.SourceVersion)" \
+          infra-tests/
       displayName: 'Run infra tests'
 
