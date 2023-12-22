@@ -142,7 +142,7 @@ stages:
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
               script: |
                 $tf_output = terraform output -json | ConvertFrom-Json
-                $urls = $tf_output.apps_url.value | Join-String -Separator ","
+                $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
                 Write-Host "Application URL list: ${urls}"
                 Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
@@ -159,7 +159,9 @@ stages:
       displayName: 'Install dependencies'
 
     - script: |
-        echo URLs: $(terraformAppUrls)
+        echo "URLs: $(terraformAppUrls)"
+        echo "Whait 10 seconds before test"
+        sleep 10
         pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
       displayName: 'Run infra tests'
       workingDirectory: $(Build.SourcesDirectory)/infra-tests
