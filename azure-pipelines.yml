@@ -29,7 +29,7 @@ variables:
   tfstateStorageContainer: tfstate
   tfstateStorageKey: container-demoapp.tfstate
 
-  skipBuild: true
+  skipBuild: false
 
 pool:
   vmImage: $(vmImageName)
