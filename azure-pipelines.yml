@@ -134,7 +134,7 @@ stages:
 
           # Terraform output - get URLs of the apps
           - task: PowerShell@2
-            name: tf_output
+            name: tfoutput
             displayName:  Get URLs of the deployed apps
             inputs:
               targetType: inline
@@ -144,7 +144,7 @@ stages:
                 $tf_output = terraform output -json | ConvertFrom-Json
                 $urls = $tf_output.apps_url.value | Join-String -Separator ","
                 Write-Host "Application URL list: ${urls}"
-                Write-Host "##vso[task.setvariable variable=TF_APP_URLS;isoutput=true]${urls}"
+                Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]]${urls}"
 
 # Verification stage
 - stage: Verify
@@ -154,7 +154,7 @@ stages:
   - job: Verify
     displayName: Run verification tests
     variables:
-      terraformAppUrls: $[stageDependencies.Deploy.Deploy['tf_output.TF_APP_URLS']]
+      terraformAppUrls: $[stageDependencies.Deploy.Deploy['tfoutput.tf_app_urls']]
     steps:
     - script: |
         pip install pytest pytest-azurepipelines
