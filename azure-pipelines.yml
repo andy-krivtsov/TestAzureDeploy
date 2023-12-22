@@ -155,7 +155,7 @@ stages:
       terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
     steps:
     - script: |
-        pip install pytest pytest-azurepipelines
+        pip install pytest pytest-azurepipelines urllib3
       displayName: 'Install dependencies'
 
     - script: |
