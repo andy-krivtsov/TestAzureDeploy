@@ -19,7 +19,7 @@ from azure.monitor.events.extension import track_event
 
 
 from demoapp.service_provider import ServiceProvider
-from demoapp.application import AppBuilder, AppAttributes
+from demoapp.app.baseapp import AppBuilder, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.services.servicebus import MessagingService
 from demoapp.services.cosmosdb import DatabaseService

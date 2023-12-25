@@ -16,8 +16,9 @@ from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry import baggage
 from opentelemetry import context
 
+from demoapp.app.baseapp import Application, AppAttributes
+
 from demoapp.service_provider import ServiceProvider
-from demoapp.application import AppBuilder, AppAttributes
 from demoapp.services.messagelist import MessageList
 from demoapp.settings import AppSettings
 from demoapp.models import Message, ComponentsEnum, MessageViewDTO, MessageViewList, StatusMessage, StatusTagEnum
@@ -105,99 +106,37 @@ async def process_status_message(status_message: Message):
     except Exception as exc:
         logging.exception("Exception %s in status message processing, id=%s, message: %s", type(exc), status_message.id, exc )
 
-#  Application initialization and FastAPI object
-status_receiver_task: Task[Any] = None
-async def app_init(app: FastAPI, sp: ServiceProvider):
-    global status_receiver_task
-    settings: AppSettings = sp.get_service(AppSettings)
+# #  Application initialization and FastAPI object
+# status_receiver_task: Task[Any] = None
+# async def app_init(app: FastAPI, sp: ServiceProvider):
+#     global status_receiver_task
+#     settings: AppSettings = sp.get_service(AppSettings)
 
-    msg_srv: MessagingService = MessagingService(settings, app.state.component)
-    sp.register(MessagingService, msg_srv)
+#     msg_srv: MessagingService = MessagingService(settings, app.state.component)
+#     sp.register(MessagingService, msg_srv)
 
-    status_receiver_task = create_task(msg_srv.receive_messages(process_status_message,True))
+#     status_receiver_task = create_task(msg_srv.receive_messages(process_status_message,True))
 
-async def app_shutdown(app: FastAPI, sp: ServiceProvider):
-    global status_receiver_task
+# async def app_shutdown(app: FastAPI, sp: ServiceProvider):
+#     global status_receiver_task
 
-    msg_srv: MessagingService = sp.get_service(MessagingService)
-    status_receiver_task.cancel()
-    await msg_srv.close()
+#     msg_srv: MessagingService = sp.get_service(MessagingService)
+#     status_receiver_task.cancel()
+#     await msg_srv.close()
 
-app = AppBuilder(ComponentsEnum.front_service)\
-        .with_settings(AppSettings()) \
-        .with_cors() \
-        .with_static() \
-        .with_liveness() \
-        .with_msal() \
-        .with_user_auth() \
-        .with_init(app_init) \
-        .with_shutdown(app_shutdown) \
-        .with_appinsights() \
-        .build()
+# app = AppBuilder(ComponentsEnum.front_service)\
+#         .with_settings(AppSettings()) \
+#         .with_cors() \
+#         .with_static() \
+#         .with_liveness() \
+#         .with_msal() \
+#         .with_user_auth() \
+#         .with_init(app_init) \
+#         .with_shutdown(app_shutdown) \
+#         .with_appinsights() \
+#         .build()
 
-require_scheme = require_auth_scheme()
-optional_scheme = optional_auth_scheme()
+# require_scheme = require_auth_scheme()
+# optional_scheme = optional_auth_scheme()
 
-# Path functions (API controllers)
-@app.get("/", response_class=HTMLResponse)
-async def get_root(
-        request: Request,
-        settings: AppSettings = Depends(app_settings),
-        current_user: UserInfo = Depends(optional_scheme),
-        templates: Jinja2Templates = Depends(app_templates)):
 
-    if current_user:
-        username = current_user.preferred_username
-    else:
-        username = ""
-
-    login_path = settings.auth_login_path
-    if settings.auth_public_url:
-        login_path = f"{settings.auth_login_path}?redirect_uri={settings.auth_public_url}{settings.auth_token_path}"
-
-    return templates.TemplateResponse("front-main.html.j2", {
-        "request": request,
-        "settings": settings,
-        "username": username,
-        "login_path": login_path,
-        "logout_path": settings.auth_logout_path,
-    })
-
-# post message to the data topic
-@app.post("/messages/")
-async def post_message(
-        request: Request,
-        message: Message,
-        msg_srv: MessagingService = Depends(global_service(MessagingService)),
-        current_user: UserInfo = Depends(require_scheme),
-        sent_list: MessageList = Depends(get_sent_list)
-    ):
-    if not current_user:
-        raise HTTPException(status_code=401, detail="User is unauthorized")
-
-    logging.info(f"post_message(): new message: {message.id}")
-    return await new_message(message=message, msg_srv=msg_srv, sent_list=sent_list)
-
-@app.get("/messages/", response_model=MessageViewList)
-async def get_messages(
-            request: Request,
-            last_version: Annotated[int, Query()] = -1,
-            current_user: UserInfo = Depends(require_scheme),
-            sent_list: MessageList = Depends(get_sent_list)
-        ) -> MessageViewList:
-
-    if not current_user:
-        raise HTTPException(status_code=401, detail="User is unauthorized")
-
-    return MessageViewList(
-        version=sent_list.version,
-        messages=list(sent_list.get_after_version(last_version))
-    )
-
-@app.websocket("/view/feed")
-async def view_websocket(
-            websocket: WebSocket,
-            current_user: UserInfo = Depends(require_scheme),
-            view_connections: WebSocketManager = Depends(get_view_connections)
-        ):
-    await view_connections.new_connection(websocket, current_user)

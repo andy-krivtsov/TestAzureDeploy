@@ -40,7 +40,6 @@ class AppAttributes:
     APP_MESSAGE_DTO = "app.message_dto"
     APP_STATUS_VALUE = "app.status_value"
 
-
 class SpanEnrichingProcessor(SpanProcessor):
     attrs_list: list[str] = [AppAttributes.APP_MESSAGE_ID, SpanAttributes.ENDUSER_ID]
 
@@ -59,6 +58,110 @@ async def simple_liveness(
         "status": "OK",
         "commit": settings.git_commit_sha
     }
+
+class Application:
+    class StaticMount(BaseModel):
+        path: str
+        file_path: Path
+        name: str
+
+    def __init__(
+            self,
+            component: ComponentsEnum,
+            settings: AppSettings = AppSettings(),
+            statics: list[StaticMount] = [StaticMount(path="/static", file_path=Path("demoapp/static"), name="static")],
+            user_auth: bool = True,
+            health_probes: bool = True,
+            app_insights: bool = True,
+            init_handler: Callable[[Application], Awaitable] = None,
+            shutdown_handler: Callable[[Application], Awaitable] = None
+        ):
+
+        self._settings = settings
+        self._init_handler = init_handler
+        self._shutdown_handler = shutdown_handler
+
+        setup_logging(settings)
+
+        if app_insights:
+            configure_azure_monitor(
+                connection_string=self._settings.app_insights_constr,
+                disable_offline_storage=True)
+            get_tracer_provider().add_span_processor(SpanEnrichingProcessor())   # type: ignore
+
+        self._component = component
+        self._app = fastapi.FastAPI(lifespan=self.app_lifespan)
+        self._app.state.component = self._component
+
+        for mount in statics:
+            self._app.mount(path=mount.path, app=StaticFiles(directory=mount.file_path), name=mount.name)
+
+        if health_probes:
+            self._app.add_api_route(path=LIVENESS_PROBE_PATH, endpoint=simple_liveness)
+
+        self._app.add_middleware(
+            CORSMiddleware, allow_origins=["*"],
+            allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+        self._msal_auth = MSALAuthorization(client_config=msal_auth_config(self._settings))
+
+        if user_auth:
+            self._app.add_middleware(SessionMiddleware, secret_key=self._settings.auth_session_key)
+            self._app.include_router(self._msal_auth.router)
+
+    @property
+    def fastapi(self) -> fastapi.FastAPI:
+        return self._app
+
+    @property
+    def auth(self) -> MSALAuthorization:
+        return self._msal_auth
+
+    @property
+    def component(self) -> ComponentsEnum:
+        return self._component
+
+    @property
+    def settings(self) -> AppSettings:
+        return self._settings
+
+    @asynccontextmanager
+    async def app_lifespan(self, app: fastapi.FastAPI):
+        await self.app_init(app)
+        if self._init_handler:
+            await self._init_handler(self)
+
+        yield
+
+        if self._shutdown_handler:
+            await self._shutdown_handler(self)
+
+        await self.app_shutdown(app)
+
+    async def app_init(self, app: fastapi.FastAPI):
+        pass
+
+    async def app_shutdown(self, app: fastapi.FastAPI):
+        pass
+
+    @staticmethod
+    def get_app() -> Application:
+        global __GLOBAL_APPLICATION
+        return __GLOBAL_APPLICATION
+
+
+__GLOBAL_APPLICATION: Application = None
+
+def get_application() -> Application:
+    global __GLOBAL_APPLICATION
+    return __GLOBAL_APPLICATION
+
+def set_application(app: Application):
+    global __GLOBAL_APPLICATION
+    __GLOBAL_APPLICATION = app
+
+#====================================================================================================================================
+#====================================================================================================================================
 
 class AppBuilder:
     class StaticMount(BaseModel):

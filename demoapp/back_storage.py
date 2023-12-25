@@ -15,7 +15,7 @@ from opentelemetry.trace import get_tracer, SpanKind
 from fastapi_msal.models import UserInfo
 
 from demoapp.service_provider import ServiceProvider
-from demoapp.application import AppBuilder
+from demoapp.app.baseapp import AppBuilder
 from demoapp.services.messagelist import MessageList
 from demoapp.services.servicebus import MessagingService
 from demoapp.services.storage import StorageService
