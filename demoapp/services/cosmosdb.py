@@ -8,7 +8,7 @@ import uuid
 from azure.identity.aio import ClientSecretCredential
 from azure.cosmos.aio import CosmosClient, DatabaseProxy, ContainerProxy
 
-from demoapp.settings import AppSettings
+from demoapp.services import AppSettings
 from demoapp.models import Message
 
 class DatabaseService:

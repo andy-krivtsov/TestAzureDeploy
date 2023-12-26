@@ -16,13 +16,14 @@ COPY /requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
 COPY /demoapp /demoapp/
-COPY /fastapi_msal /fastapi_msal
+COPY /contrib /contrib/
 
 ENV GIT_COMMIT_SHA=${git_commit}
+ENV PYTHONPATH=/contrib
 
 EXPOSE 8000/tcp
 
 ENTRYPOINT [ "/usr/local/bin/uvicorn" ]
 
-CMD ["--host", "0.0.0.0", "demoapp.front:app"]
+CMD ["--host", "0.0.0.0", "demoapp.front_main:app"]
 

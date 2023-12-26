@@ -12,5 +12,14 @@
         "uviconrn",
         "uvicorn"
     ],
-    "svg.preview.background": "custom"
+    "svg.preview.background": "custom",
+    "python.autoComplete.extraPaths": [
+        "contrib"
+    ],
+    "python.analysis.extraPaths": [
+        "contrib"
+    ],
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/contrib:${env:PYTHONPATH}"
+    }
 }

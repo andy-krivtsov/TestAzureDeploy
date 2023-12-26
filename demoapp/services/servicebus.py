@@ -9,13 +9,11 @@ from azure.servicebus.aio import ServiceBusClient, ServiceBusSender, ServiceBusR
 from azure.servicebus import ServiceBusReceiveMode, ServiceBusReceivedMessage, ServiceBusMessage
 from azure.servicebus.exceptions import MessageLockLostError, SessionLockLostError, MessageAlreadySettled
 from pydantic import BaseModel
+from opentelemetry import context, propagate
+
+
 from demoapp.models import ComponentsEnum, Message, MessageStatusData, StatusMessage, StatusTagEnum
-from opentelemetry import trace, baggage, context, propagate
-
-
-from demoapp.settings import AppSettings
-
-FRONT_QUEUE_IDENTIFIER = "front-service"
+from demoapp.services import AppSettings
 
 class MessagingService:
 
@@ -118,11 +116,11 @@ class MessagingService:
             async for queue_msg in receiver:
                 try:
                     # Get trace baggage fom message and inject to current runtime context
-                    remote_ctx = propagate.extract(self.to_string_dict(queue_msg.application_properties))
-                    baggage_data = dict(baggage.get_all(remote_ctx))
 
+                    remote_ctx = propagate.extract(self.to_string_dict(queue_msg.application_properties))
                     ctx_token = context.attach(remote_ctx)
 
+                    #baggage_data = dict(baggage.get_all(remote_ctx))
                     # if baggage_data:
                     #     updated_ctx = None
                     #     for k,v in baggage_data.items():

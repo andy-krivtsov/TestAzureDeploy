@@ -27,7 +27,7 @@ locals {
 
   app_list = {
     "front" = {
-      args = ["--host", "0.0.0.0", "demoapp.front:app"]
+      args = ["--host", "0.0.0.0", "demoapp.front_main:app"]
       envs = {
         SERVICEBUS_SUBSCRIPTION = ""
         OTEL_SERVICE_NAME="Front"
@@ -35,14 +35,14 @@ locals {
       }
     }
     "backdb" = {
-      args = ["--host", "0.0.0.0", "demoapp.back_db:app"]
+      args = ["--host", "0.0.0.0", "demoapp.back_db_main:app"]
       envs = {
         OTEL_SERVICE_NAME="BackDB"
         SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.db_sub.name
       }
     }
     "backstor" = {
-      args = ["--host", "0.0.0.0", "demoapp.back_storage:app"]
+      args = ["--host", "0.0.0.0", "demoapp.back_storage_main:app"]
       envs = {
         OTEL_SERVICE_NAME="BackStorage"
         SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.stor_sub.name

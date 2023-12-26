@@ -5,9 +5,9 @@ import logging
 from azure.identity.aio import ClientSecretCredential
 from azure.storage.blob.aio import BlobServiceClient
 from azure.storage.blob import BlobType, ContentSettings
-from demoapp.models import Message
 
-from demoapp.settings import AppSettings
+from demoapp.models import Message
+from demoapp.services.settings import AppSettings
 
 class StorageService:
     def __init__(self, settings: AppSettings):

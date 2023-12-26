@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.front:app",
+                "demoapp.front_main:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -28,7 +28,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.back_db:app",
+                "demoapp.back_db_main:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -46,7 +46,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.back_storage:app",
+                "demoapp.back_storage_main:app",
                 "--reload",
                 "--host",
                 "localhost",

@@ -38,25 +38,23 @@ class MSALScheme(SecurityBase):
         # needs further investigation (type...)
         self.model = OAuth2Model(flows=flows, type=SecuritySchemeType.oauth2)
 
-    async def __call__(self, request: Request, websocket: WebSocket = None) -> IDTokenClaims:
+    async def __call__(self, request: HTTPConnection) -> IDTokenClaims:
         http_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-        httpcon = request or websocket
-
         # 1. retrieve token from header or session
         token_claims: Optional[IDTokenClaims] = None
         # 1.a. retrieve token from header
-        authorization: Optional[str] = httpcon.headers.get("Authorization")
+        authorization: Optional[str] = request.headers.get("Authorization")
         scheme, token = get_authorization_scheme_param(authorization)
         if authorization and scheme.lower() == "bearer":
             token_claims = await self.handler.parse_id_token(token=token)
         else:
             # 1.b. retrieve token from session
-            session_token: Optional[AuthToken] = await self.handler.get_token_from_session(request=httpcon)
+            session_token: Optional[AuthToken] = await self.handler.get_token_from_session(request=request)
             if session_token:
                 token_claims = session_token.id_token_claims
 
