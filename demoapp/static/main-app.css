@@ -1,0 +1,26 @@
+body {
+  min-height: 100vh;
+}
+
+html {
+  height: 100vh;
+}
+
+main {
+  height: 100vh;
+  max-height: 100vh;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.table {
+  --bs-table-bg: var(--bs-tertiary-bg-rgb);
+}
+
+.card {
+  --bs-card-title-spacer-y: 1rem;
+}
+
+#leftSidebar .nav-link {
+  --bs-nav-link-font-size: 1.1rem
+}

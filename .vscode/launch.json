@@ -72,7 +72,7 @@
                 "--port",
                 "8300"
             ],
-            "envFile": "${workspaceFolder}/back.env",
+            "envFile": "${workspaceFolder}/front.env",
             "jinja": true,
             "justMyCode": false,
             "consoleTitle": "Testapp"

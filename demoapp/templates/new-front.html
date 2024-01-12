@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Python FastAPI Demoapp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="main-app.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <main class="d-flex flex-nowrap">
+
+      <!-- Left sidebar and navigation -->
+      <div id="leftSidebar" class="d-flex flex-column p-3 bg-body-tertiary" style="width: 230px;">
+        <a href="/" class="d-flex align-items-center mb-2 text-white text-decoration-none">
+          <img class="bi me-2" width="35" src="appservice.svg" />
+          <span class="fs-4 me-3">DemoApp</span>
+        </a>
+        <hr/>
+        <ul class="nav flex-column mb-auto">
+          <li class="nav-item">
+            <a class="nav-link text-white link-body-emphasis h4" href="#">
+              <i class="bi bi-table"></i>&nbsp;
+              Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-secondary link-body-emphasis" href="#">
+              <i class="bi bi-info-circle"></i>&nbsp;
+              About
+            </a>
+          </li>
+        </ul>
+
+        <hr/>
+        <!-- Logged in user data -->
+        <div class="dropdown">
+          <a class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+            <img src="https://github.com/mdo.png" width="32" height="32" class="rounded-circle me-2"/>
+            <strong>Username</strong>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Logout</a></li>
+          </ul>
+        </div>
+
+        <hr/>
+
+        <!-- Login button -->
+        <button type="button" class="btn btn-outline-light mb-4 mt-2">Login</button>
+      </div>
+
+      <!-- Right content block -->
+      <div class="d-flex flex-nowrap flex-column flex-fill">
+
+        <!-- Content top navigation -->
+        <div class="d-flex p-2 pt-3 bg-body-dark">
+            <ul class="nav justify-content-left flex-fill">
+              <li><a href="#" class="nav-link px-2 me-4 text-white link-body-emphasis">Active Orders</a></li>
+              <li><a href="#" class="nav-link px-2 text-secondary link-body-emphasis">Orders Table</a></li>
+            </ul>
+        </div>
+
+        <!-- Content part (new order page) -->
+        <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1000px;">
+
+           <!-- New order card -->
+          <div class="card bg-body-tertiary mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Create new order</h5>
+              <form>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="form-floating">
+                      <input type="text" class="form-control" id="orderId" placeholder="12345678">
+                      <label for="orderId">Order ID</label>
+                    </div>
+                  </div>
+                  <div class="col form-floating mb-3">
+                    <div class="form-floating">
+                      <input type="date" class="form-control" id="orderDate" value="2024-01-11" disabled>
+                      <label for="orderDate">Order Date</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-floating mb-3">
+                  <select class="form-select" id="customerName">
+                    <option selected>Select customer name</option>
+                    <option value="1">Customer #1</option>
+                    <option value="2">Customer #2</option>
+                    <option value="3">Customer #3</option>
+                  </select>
+                  <label for="customerName">Customer Name</label>
+                </div>
+
+                <div class="row">
+                  <div class="col-8">
+                    <div class="form-floating">
+                      <select class="form-select" id="itemType1">
+                        <option selected>Select Item 1 type</option>
+                        <option value="1">Supply #1</option>
+                        <option value="2">Supply #2</option>
+                        <option value="3">Supply #3</option>
+                      </select>
+                      <label for="itemType1">Item type #1</label>
+                    </div>
+                  </div>
+                  <div class="col form-floating mb-3">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id="itemNumber1" value="0" min="0">
+                      <label for="itemNumber1">Item #1 number</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-8">
+                    <div class="form-floating">
+                      <select class="form-select" id="itemType2">
+                        <option selected>Select Item 2 type</option>
+                        <option value="1">Supply #1</option>
+                        <option value="2">Supply #2</option>
+                        <option value="3">Supply #3</option>
+                      </select>
+                      <label for="itemType2">Item type #2</label>
+                    </div>
+                  </div>
+                  <div class="col form-floating mb-3">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id="itemNumber2" value="0" min="0">
+                      <label for="itemNumber2">Item #2 number</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-floating mb-3">
+                  <input type="date" class="form-control" id="dueDate" value="2024-01-11" min="2024-01-11">
+                  <label for="dueDate">Due date</label>
+                </div>
+
+                <div class="d-flex">
+                  <button type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto">Generate</button>
+                  <button type="button" class="btn btn-primary mt-2 px-5 py-2">New Order</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Active orders list card -->
+          <div class="card bg-body-tertiary mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Active Orders</h5>
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                  <tr>
+                    <th scope="row">123456</th>
+                    <td>01.01.1980 10:35:15</td>
+                    <td>Customer #1</td>
+                    <td>Completed</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">767899</th>
+                    <td>01.02.1980 01:15:15</td>
+                    <td>Customer #2</td>
+                    <td>Created</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">445999</th>
+                    <td>01.02.2001 18:30:00</td>
+                    <td>Customer #3</td>
+                    <td>Processing</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full orders page -->
+        <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1400px;">
+
+          <!-- Full orders card -->
+          <div class="card bg-body-tertiary mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Full orders list</h5>
+              <table class="table table-hover mb-4">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Item #1</th>
+                    <th scope="col">Count #1</th>
+                    <th scope="col">Item #2</th>
+                    <th scope="col">Count #2</th>
+                    <th scope="col">Due date</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                  <tr>
+                    <td>123456</td>
+                    <td>01.01.1980 10:35:15</td>
+                    <td>Customer #1</td>
+                    <td>Supply #1</td>
+                    <td>10</td>
+                    <td>Supply #2</td>
+                    <td>20</td>
+                    <td>01.02.1980 10:35:15</td>
+                    <td>Completed</td>
+                  </tr>
+                  <tr>
+                    <td>123456</td>
+                    <td>01.01.1980 10:35:15</td>
+                    <td>Customer #1</td>
+                    <td>Supply #1</td>
+                    <td>10</td>
+                    <td>Supply #2</td>
+                    <td>20</td>
+                    <td>01.02.1980 10:35:15</td>
+                    <td>Completed</td>
+                  </tr>
+                  <tr>
+                    <td>123456</td>
+                    <td>01.01.1980 10:35:15</td>
+                    <td>Customer #1</td>
+                    <td>Supply #1</td>
+                    <td>10</td>
+                    <td>Supply #2</td>
+                    <td>20</td>
+                    <td>01.02.1980 10:35:15</td>
+                    <td>Completed</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="d-flex justify-content-start align-items-start">
+                <div class="d-flex flex-nowrap me-auto align-items-center">
+                  <label for="pageSize" class="form-label text-nowrap m-0">Page size:</label>
+                  <select class="form-select mx-2" id="pageSize">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                  </select>
+                </div>
+
+                <nav>
+                  <ul class="pagination justify-content-end">
+                    <li class="page-item disabled">
+                      <a class="page-link">Previous</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                      <a class="page-link" href="#">Next</a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+
+         <!-- About page -->
+         <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1000px;">
+          <h1>Python Demo Application</h1>
+          <h4 class="mb-3">Azure simple microservices-based demo application</h4>
+
+          <h5>Used technologies:</h5>
+          <ul class="mb-3">
+            <li>Azure Container Apps</li>
+            <li>Azure Service Bus</li>
+            <li>Azure DevOps</li>
+            <li>Azure App Insights</li>
+            <li>Azure Cosmos DB</li>
+            <li>Azure Storage</li>
+          </ul>
+          <h5>Architecture diagram:</h5>
+          <img src="azure-demo.png" width="740" class="m-2 border border-light-subtle"/>
+         </div>
+      </div>
+
+  </main>
+</body>
+</html>

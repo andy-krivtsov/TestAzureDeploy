@@ -1,0 +1,19 @@
+{% extends "app-base.html.j2" %}
+
+{% set p1_style = "text-white" if page_name == "new" else "text-secondary" %}
+{% set p2_style = "text-white" if page_name == "list" else "text-secondary" %}
+
+{% block main_content %}
+ <!-- Content top navigation -->
+<div class="d-flex p-2 pt-3 bg-body-dark">
+    <ul class="nav justify-content-left flex-fill">
+      <li><a href="{{ url_for('get_page', page_name='new') }}" class="nav-link px-2 me-4 {{ p1_style }} link-body-emphasis">Active Orders</a></li>
+      <li><a href="{{ url_for('get_page', page_name='list') }}" class="nav-link px-2 {{ p2_style }} link-body-emphasis">Orders Table</a></li>
+    </ul>
+</div>
+
+{% block page_content %}
+Page content part
+{% endblock %}
+
+{% endblock %}

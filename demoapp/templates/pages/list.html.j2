@@ -1,0 +1,89 @@
+{% extends "orders-base.html.j2" %}
+
+{% block page_content %}
+ <!-- Full orders page -->
+<div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1400px;">
+
+  <!-- Full orders card -->
+  <div class="card bg-body-tertiary mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Full orders list</h5>
+      <table class="table table-hover mb-4">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Date</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Item #1</th>
+            <th scope="col">Count #1</th>
+            <th scope="col">Item #2</th>
+            <th scope="col">Count #2</th>
+            <th scope="col">Due date</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          <tr>
+            <td>123456</td>
+            <td>01.01.1980 10:35:15</td>
+            <td>Customer #1</td>
+            <td>Supply #1</td>
+            <td>10</td>
+            <td>Supply #2</td>
+            <td>20</td>
+            <td>01.02.1980 10:35:15</td>
+            <td>Completed</td>
+          </tr>
+          <tr>
+            <td>123456</td>
+            <td>01.01.1980 10:35:15</td>
+            <td>Customer #1</td>
+            <td>Supply #1</td>
+            <td>10</td>
+            <td>Supply #2</td>
+            <td>20</td>
+            <td>01.02.1980 10:35:15</td>
+            <td>Completed</td>
+          </tr>
+          <tr>
+            <td>123456</td>
+            <td>01.01.1980 10:35:15</td>
+            <td>Customer #1</td>
+            <td>Supply #1</td>
+            <td>10</td>
+            <td>Supply #2</td>
+            <td>20</td>
+            <td>01.02.1980 10:35:15</td>
+            <td>Completed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="d-flex justify-content-start align-items-start">
+        <div class="d-flex flex-nowrap me-auto align-items-center">
+          <label for="pageSize" class="form-label text-nowrap m-0">Page size:</label>
+          <select class="form-select mx-2" id="pageSize">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+
+        <nav>
+          <ul class="pagination justify-content-end">
+            <li class="page-item disabled">
+              <a class="page-link">Previous</a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+              <a class="page-link" href="#">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

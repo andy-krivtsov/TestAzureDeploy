@@ -1,0 +1,127 @@
+{% extends "orders-base.html.j2" %}
+
+{% block page_content %}
+<!-- Content part (new order page) -->
+<div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1000px;">
+
+  <!-- New order card -->
+  <div class="card bg-body-tertiary mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Create new order</h5>
+      <form>
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="orderId" placeholder="12345678">
+              <label for="orderId">Order ID</label>
+            </div>
+          </div>
+          <div class="col form-floating mb-3">
+            <div class="form-floating">
+              <input type="date" class="form-control" id="orderDate" value="2024-01-11" disabled>
+              <label for="orderDate">Order Date</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-floating mb-3">
+          <select class="form-select" id="customerName">
+            <option selected>Select customer name</option>
+            <option value="1">Customer #1</option>
+            <option value="2">Customer #2</option>
+            <option value="3">Customer #3</option>
+          </select>
+          <label for="customerName">Customer Name</label>
+        </div>
+
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <select class="form-select" id="itemType1">
+                <option selected>Select Item 1 type</option>
+                <option value="1">Supply #1</option>
+                <option value="2">Supply #2</option>
+                <option value="3">Supply #3</option>
+              </select>
+              <label for="itemType1">Item type #1</label>
+            </div>
+          </div>
+          <div class="col form-floating mb-3">
+            <div class="form-floating">
+              <input type="number" class="form-control" id="itemNumber1" value="0" min="0">
+              <label for="itemNumber1">Item #1 number</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <select class="form-select" id="itemType2">
+                <option selected>Select Item 2 type</option>
+                <option value="1">Supply #1</option>
+                <option value="2">Supply #2</option>
+                <option value="3">Supply #3</option>
+              </select>
+              <label for="itemType2">Item type #2</label>
+            </div>
+          </div>
+          <div class="col form-floating mb-3">
+            <div class="form-floating">
+              <input type="number" class="form-control" id="itemNumber2" value="0" min="0">
+              <label for="itemNumber2">Item #2 number</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-floating mb-3">
+          <input type="date" class="form-control" id="dueDate" value="2024-01-11" min="2024-01-11">
+          <label for="dueDate">Due date</label>
+        </div>
+
+        <div class="d-flex">
+          <button type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto">Generate</button>
+          <button type="button" class="btn btn-primary mt-2 px-5 py-2">New Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Active orders list card -->
+  <div class="card bg-body-tertiary mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Active Orders</h5>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Date</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          <tr>
+            <th scope="row">123456</th>
+            <td>01.01.1980 10:35:15</td>
+            <td>Customer #1</td>
+            <td>Completed</td>
+          </tr>
+          <tr>
+            <th scope="row">767899</th>
+            <td>01.02.1980 01:15:15</td>
+            <td>Customer #2</td>
+            <td>Created</td>
+          </tr>
+          <tr>
+            <th scope="row">445999</th>
+            <td>01.02.2001 18:30:00</td>
+            <td>Customer #3</td>
+            <td>Processing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
