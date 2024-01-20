@@ -1,89 +1,108 @@
 {% extends "orders-base.html.j2" %}
 
 {% block page_content %}
+<script type="module">
+  import { datetimeFormat } from "/static/utils.js"
+  import { deleteOrders, generateTestOrders } from '/static/orders-api.js'
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function onClearAndGenerate() {
+    console.log("Clear DB and generate new test orders in DB (server-side operation)")
+
+    const myModal = new bootstrap.Modal(document.getElementById('listGenerateModal'))
+
+    await myModal.show()
+
+    await deleteOrders()
+    await generateTestOrders()
+
+    setTimeout(async () => {
+      $(`#fullOrderList`).bootstrapTable('refresh')
+      await myModal.hide()
+    }, "500")
+  }
+
+  window.onClearAndGenerate = onClearAndGenerate
+
+  function tableDateFormatter(value) {
+    return datetimeFormat(new Date(value))
+  }
+
+  window.tableDateFormatter = tableDateFormatter
+
+  function orderItemFormatter(value, row, index, field) {
+    if (field.startsWith("item-name-")) {
+      return row.items[field.slice(-1)].item.name
+    }
+
+    if (field.startsWith("item-count-")) {
+      return row.items[field.slice(-1)].count
+    }
+
+    return ""
+  }
+
+  window.tableItemFormatter = orderItemFormatter
+</script>
+
+
  <!-- Full orders page -->
 <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1400px;">
 
   <!-- Full orders card -->
   <div class="card bg-body-tertiary mb-4">
     <div class="card-body">
-      <h5 class="card-title">Full orders list</h5>
-      <table class="table table-hover mb-4">
+      <div class="d-flex flex-row align-items-center mb-3">
+        <div class="me-auto"><h5 class="card-title mb-0">Orders List</h5></div>
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="onClearAndGenerate()">Clear and generate test orders</button>
+      </div>
+      <table id="fullOrderList" class="table table-hover mb-4 table-sm"
+        data-url="/api/orders"
+        data-toggle="table"
+        data-unique-id="id"
+        data-sort-name="created"
+        data-sort-order="desc"
+        data-pagination="true"
+        data-side-pagination="server"
+        data-page-size="25">
         <thead>
           <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Date</th>
-            <th scope="col">Customer</th>
-            <th scope="col">Item #1</th>
-            <th scope="col">Count #1</th>
-            <th scope="col">Item #2</th>
-            <th scope="col">Count #2</th>
-            <th scope="col">Due date</th>
-            <th scope="col">Status</th>
+            <th scope="col" data-field="id" data-sortable="true">ID</th>
+            <th scope="col" data-field="created" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Created</th>
+            <th scope="col" data-field="customer.name" data-sort-name="customer" data-sortable="true">Customer</th>
+            <th scope="col" data-field="item-name-0" data-formatter="tableItemFormatter">Item #1</th>
+            <th scope="col" data-field="item-count-0" data-formatter="tableItemFormatter">Count #1</th>
+            <th scope="col" data-field="item-name-1" data-formatter="tableItemFormatter">Item #2</th>
+            <th scope="col" data-field="item-count-1" data-formatter="tableItemFormatter">Count #2</th>
+            <th scope="col" data-field="dueDate" data-sort-name="due_date" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Due date</th>
+            <th scope="col" data-field="status" data-sortable="true" data-align="center">Status</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">
-          <tr>
-            <td>123456</td>
-            <td>01.01.1980 10:35:15</td>
-            <td>Customer #1</td>
-            <td>Supply #1</td>
-            <td>10</td>
-            <td>Supply #2</td>
-            <td>20</td>
-            <td>01.02.1980 10:35:15</td>
-            <td>Completed</td>
-          </tr>
-          <tr>
-            <td>123456</td>
-            <td>01.01.1980 10:35:15</td>
-            <td>Customer #1</td>
-            <td>Supply #1</td>
-            <td>10</td>
-            <td>Supply #2</td>
-            <td>20</td>
-            <td>01.02.1980 10:35:15</td>
-            <td>Completed</td>
-          </tr>
-          <tr>
-            <td>123456</td>
-            <td>01.01.1980 10:35:15</td>
-            <td>Customer #1</td>
-            <td>Supply #1</td>
-            <td>10</td>
-            <td>Supply #2</td>
-            <td>20</td>
-            <td>01.02.1980 10:35:15</td>
-            <td>Completed</td>
-          </tr>
         </tbody>
       </table>
+    </div>
+  </div>
 
-      <div class="d-flex justify-content-start align-items-start">
-        <div class="d-flex flex-nowrap me-auto align-items-center">
-          <label for="pageSize" class="form-label text-nowrap m-0">Page size:</label>
-          <select class="form-select mx-2" id="pageSize">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-          </select>
+  <!-- Modal -->
+  <div class="modal fade" id="listGenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">Regenerate orders list</h1>
         </div>
-
-        <nav>
-          <ul class="pagination justify-content-end">
-            <li class="page-item disabled">
-              <a class="page-link">Previous</a>
-            </li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-              <a class="page-link" href="#">Next</a>
-            </li>
-          </ul>
-        </nav>
+        <div class="modal-body">
+          Please wait while we are generating new test orders...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
+
 </div>
 {% endblock %}

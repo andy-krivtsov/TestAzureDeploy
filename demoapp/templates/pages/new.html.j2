@@ -1,6 +1,63 @@
 {% extends "orders-base.html.j2" %}
 
 {% block page_content %}
+<script type="module">
+  import { setupNewOrderForm, onNewOrder, onGenerateRandomOrder, updateActiveOrdersTable } from "/static/new-order.js"
+  import { datetimeFormat } from "/static/utils.js"
+  import { getWebsocketInfo, webSocketConnect } from "/static/orders-api.js"
+
+  window.addEventListener('load', async (event) => {
+    await setupNewOrderForm();
+
+    if (window.userInfo) {
+      const info = await getWebsocketInfo()
+      console.log(`WebSocket URL: ${info.url}`)
+
+      setTimeout(webSocketConnect, 0, info.url, (msg) => {
+        updateActiveOrdersTable(msg)
+      })
+    }
+  });
+
+  function tableDateFormatter(value) {
+    return datetimeFormat(new Date(value))
+  }
+
+  function tableQueryParams(params) {
+    params['active'] = true
+    return params
+  }
+
+  function statusCellStyle(value, row, index, field) {
+    let ret = {}
+
+    switch (value){
+      case "New":
+        ret.classes = "bg-info text-dark"
+        break
+      case "Processing":
+        ret.classes = "bg-warning text-dark"
+        break
+      case "Completed":
+        ret.classes = "bg-success text-white"
+        break
+      case "Error":
+        ret.classes = "bg-danger text-white"
+        break
+    }
+
+    return ret
+  }
+
+
+  window.onNewOrder = onNewOrder
+  window.onGenerateRandomOrder = onGenerateRandomOrder
+  window.tableDateFormatter = tableDateFormatter
+  window.tableQueryParams = tableQueryParams
+  window.statusCellStyle = statusCellStyle
+
+</script>
+
 <!-- Content part (new order page) -->
 <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1000px;">
 
@@ -26,10 +83,6 @@
 
         <div class="form-floating mb-3">
           <select class="form-select" id="customerName">
-            <option selected>Select customer name</option>
-            <option value="1">Customer #1</option>
-            <option value="2">Customer #2</option>
-            <option value="3">Customer #3</option>
           </select>
           <label for="customerName">Customer Name</label>
         </div>
@@ -38,10 +91,6 @@
           <div class="col-8">
             <div class="form-floating">
               <select class="form-select" id="itemType1">
-                <option selected>Select Item 1 type</option>
-                <option value="1">Supply #1</option>
-                <option value="2">Supply #2</option>
-                <option value="3">Supply #3</option>
               </select>
               <label for="itemType1">Item type #1</label>
             </div>
@@ -58,10 +107,6 @@
           <div class="col-8">
             <div class="form-floating">
               <select class="form-select" id="itemType2">
-                <option selected>Select Item 2 type</option>
-                <option value="1">Supply #1</option>
-                <option value="2">Supply #2</option>
-                <option value="3">Supply #3</option>
               </select>
               <label for="itemType2">Item type #2</label>
             </div>
@@ -80,8 +125,8 @@
         </div>
 
         <div class="d-flex">
-          <button type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto">Generate</button>
-          <button type="button" class="btn btn-primary mt-2 px-5 py-2">New Order</button>
+          <button type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto" onclick="onGenerateRandomOrder()">Generate</button>
+          <button type="button" class="btn btn-primary mt-2 px-5 py-2" onclick="onNewOrder()">New Order</button>
         </div>
       </form>
     </div>
@@ -91,34 +136,22 @@
   <div class="card bg-body-tertiary mb-4">
     <div class="card-body">
       <h5 class="card-title">Active Orders</h5>
-      <table class="table table-hover">
+      <table id="currentOrders" class="table table-hover table-fixed"
+        data-url="/api/orders"
+        data-toggle="table"
+        data-unique-id="id"
+        data-sort-name="created"
+        data-sort-order="desc"
+        data-query-params="tableQueryParams">
         <thead>
           <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Date</th>
-            <th scope="col">Customer</th>
-            <th scope="col">Status</th>
+            <th data-field="id" data-sortable="true" scope="col" data-width="340" data-align="left">ID</th>
+            <th data-field="created" data-formatter="tableDateFormatter" data-sortable="true" scope="col" data-width="170" data-align="center">Created</th>
+            <th data-field="customer.name" data-sort-name="customer" data-sortable="true" scope="col" data-align="left">Customer</th>
+            <th data-field="status" data-cell-style="statusCellStyle" data-sortable="true" scope="col" data-width="100" data-align="center">Status</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">
-          <tr>
-            <th scope="row">123456</th>
-            <td>01.01.1980 10:35:15</td>
-            <td>Customer #1</td>
-            <td>Completed</td>
-          </tr>
-          <tr>
-            <th scope="row">767899</th>
-            <td>01.02.1980 01:15:15</td>
-            <td>Customer #2</td>
-            <td>Created</td>
-          </tr>
-          <tr>
-            <th scope="row">445999</th>
-            <td>01.02.2001 18:30:00</td>
-            <td>Customer #3</td>
-            <td>Processing</td>
-          </tr>
         </tbody>
       </table>
     </div>

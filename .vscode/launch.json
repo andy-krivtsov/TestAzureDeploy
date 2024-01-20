@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.front_main:app",
+                "demoapp.orders_front:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -65,7 +65,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "demoapp.testapp:app",
+                "demoapp.orders_front:app",
                 "--reload",
                 "--host",
                 "localhost",
@@ -81,7 +81,7 @@
     "compounds": [
         {
             "name": "Python: Front/Worker",
-            "configurations": [ "Front", "Back-DB", "Back-Storage" ],
+            "configurations": [ "Front" ],
             "stopAll": true
         }
     ]

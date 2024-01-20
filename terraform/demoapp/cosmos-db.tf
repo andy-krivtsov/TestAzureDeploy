@@ -32,12 +32,12 @@ resource "azurerm_cosmosdb_sql_database" "appDb" {
   account_name        = azurerm_cosmosdb_account.db_account.name
 }
 
-resource "azurerm_cosmosdb_sql_container" "appDbContainer" {
-  name                  = "app-container"
+resource "azurerm_cosmosdb_sql_container" "orders" {
+  name                  = "orders"
   resource_group_name   = data.azurerm_resource_group.rg.name
   account_name          = azurerm_cosmosdb_account.db_account.name
   database_name         = azurerm_cosmosdb_sql_database.appDb.name
-  partition_key_path    = "/sessionId"
+  partition_key_path    = "/id"
   partition_key_version = 1
 
   indexing_policy {
@@ -48,6 +48,24 @@ resource "azurerm_cosmosdb_sql_container" "appDbContainer" {
     }
   }
 }
+
+resource "azurerm_cosmosdb_sql_container" "processing" {
+  name                  = "processing"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  account_name          = azurerm_cosmosdb_account.db_account.name
+  database_name         = azurerm_cosmosdb_sql_database.appDb.name
+  partition_key_path    = "/id"
+  partition_key_version = 1
+
+  indexing_policy {
+    indexing_mode = "consistent"
+
+    included_path {
+      path = "/*"
+    }
+  }
+}
+
 
 data "azurerm_cosmosdb_sql_role_definition" "data_contibutor" {
   resource_group_name = data.azurerm_resource_group.rg.name

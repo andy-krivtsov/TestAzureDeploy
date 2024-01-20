@@ -4,6 +4,8 @@
 {% set p2_style = "text-white" if page_name == "list" else "text-secondary" %}
 
 {% block main_content %}
+
+{% if username %}
  <!-- Content top navigation -->
 <div class="d-flex p-2 pt-3 bg-body-dark">
     <ul class="nav justify-content-left flex-fill">
@@ -11,9 +13,21 @@
       <li><a href="{{ url_for('get_page', page_name='list') }}" class="nav-link px-2 {{ p2_style }} link-body-emphasis">Orders Table</a></li>
     </ul>
 </div>
-
 {% block page_content %}
 Page content part
 {% endblock %}
+
+{% else %}
+<div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1000px;">
+  <div class="card bg-body-tertiary border-danger  mb-4">
+    <div class="card-header">
+      <h5>Python Demo Application</h5>
+    </div>
+    <div class="card-body">
+      <h4 class="my-3 text-danger">You have to login to continue</h4>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}

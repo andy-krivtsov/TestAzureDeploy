@@ -11,11 +11,10 @@ locals {
 
   app_env = {
     SERVICEBUS_NAMESPACE                 = "${azurerm_servicebus_namespace.busNamespace.name}.servicebus.windows.net"
-    SERVICEBUS_TOPIC                     = azurerm_servicebus_topic.data_topic.name
-    SERVICEBUS_STATUS_QUEUE              = azurerm_servicebus_queue.status_queue.name
+    SERVICEBUS_ORDERS_TOPIC              = azurerm_servicebus_topic.orders_topic.name
+    SERVICEBUS_STATUS_TOPIC              = azurerm_servicebus_topic.status_topic.name
     DB_URL                               = azurerm_cosmosdb_account.db_account.endpoint
     DB_DATABASE                          = azurerm_cosmosdb_sql_database.appDb.name
-    DB_CONTAINER                         = azurerm_cosmosdb_sql_container.appDbContainer.name
     STORAGE_URL                          = azurerm_storage_account.stor.primary_blob_endpoint
     STORAGE_CONTAINER                    = azurerm_storage_container.stor_container.name
     APP_INSIGHTS_CONSTR                  = azurerm_application_insights.appinsights.connection_string
@@ -27,25 +26,22 @@ locals {
 
   app_list = {
     "front" = {
-      args = ["--host", "0.0.0.0", "demoapp.front_main:app"]
+      args = ["--host", "0.0.0.0", "demoapp.orders_front:app"]
       envs = {
-        SERVICEBUS_SUBSCRIPTION = ""
+        SERVICEBUS_STATUS_SUB = azurerm_servicebus_subscription.front_status_sub.name
+        SERVICEBUS_ORDERS_SUB = ""
         OTEL_SERVICE_NAME="Front"
         AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
+        DB_CONTAINER = azurerm_cosmosdb_sql_container.orders.name
       }
     }
     "backdb" = {
-      args = ["--host", "0.0.0.0", "demoapp.back_db_main:app"]
+      args = ["--host", "0.0.0.0", "demoapp.orders_back:app"]
       envs = {
-        OTEL_SERVICE_NAME="BackDB"
-        SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.db_sub.name
-      }
-    }
-    "backstor" = {
-      args = ["--host", "0.0.0.0", "demoapp.back_storage_main:app"]
-      envs = {
-        OTEL_SERVICE_NAME="BackStorage"
-        SERVICEBUS_SUBSCRIPTION = azurerm_servicebus_subscription.stor_sub.name
+        OTEL_SERVICE_NAME="Back"
+        SERVICEBUS_STATUS_SUB = ""
+        SERVICEBUS_ORDERS_SUB = azurerm_servicebus_subscription.back_orders_sub.name
+        DB_CONTAINER = azurerm_cosmosdb_sql_container.processing.name
       }
     }
   }
