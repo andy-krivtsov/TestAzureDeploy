@@ -3,6 +3,7 @@ Test demo application
 
 Application runs as user-facing WebApp
 '''
+import asyncio
 import logging
 from asyncio import Task, create_task
 from pathlib import Path
@@ -17,15 +18,18 @@ from fastapi.templating import Jinja2Templates
 from demoapp.app.sp import ServiceProvider
 from demoapp.app import AppBuilder
 from demoapp.models import ComponentsEnum
-from demoapp.controllers.orders_front import router, on_status_message
-from demoapp.services import (AppSettings, OrderRepository, CosmosDBOrderRepository,
-                              MessageService, MockMessageService, MockProcessingService, WebsocketService, LocalWebsocketService)
+from demoapp.controllers.orders_back import router, on_processing_message, background_order_processing
+from demoapp.services import (AppSettings, ProcessingRepository, MemoryProcessingRepository,
+                              MessageService, MockFrontService, MockMessageService, WebsocketService, LocalWebsocketService)
 
+processing_task: asyncio.Task = None
 
 async def app_init(app: FastAPI, sp: ServiceProvider):
-    logging.info("Front application initialization: create services")
+    global processing_task
 
-    tpl_path = Path(__file__).absolute().parent.joinpath("templates/front")
+    logging.info("Back application initialization: create services")
+
+    tpl_path = Path(__file__).absolute().parent.joinpath("templates/back")
     sp.register(Jinja2Templates, Jinja2Templates(directory=tpl_path))
 
     settings: AppSettings = sp.get_service(AppSettings)
@@ -40,29 +44,33 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     sp.register(ClientSecretCredential, azure_cret)
     sp.register(CosmosClient, cosmos_client)
 
-    repository = CosmosDBOrderRepository(
-        cosmos_client=cosmos_client,
-        db_name=settings.db_database,
-        container_name=settings.db_container
-    )
-    sp.register(OrderRepository, repository)
+    repository = MemoryProcessingRepository()
+    sp.register(ProcessingRepository, repository)
+
+    # repository = CosmosDBOrderRepository(
+    #     cosmos_client=cosmos_client,
+    #     db_name=settings.db_database,
+    #     container_name=settings.db_container
+    # )
+    # sp.register(OrderRepository, repository)
 
     websocket_service = LocalWebsocketService(app, settings)
     sp.register(WebsocketService, websocket_service)
 
     message_service = MockMessageService(sp)
-    message_service.subscribe_status_messages(on_status_message)
+    message_service.subscribe_processing_messages(on_processing_message)
     sp.register(MessageService, message_service)
 
-    mock_processor = MockProcessingService(message_service)
-    sp.register(MockProcessingService, mock_processor)
+    mock_front = MockFrontService(message_service)
+    sp.register(MockFrontService, mock_front)
 
+    processing_task = asyncio.create_task(background_order_processing(sp))
 
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
-    mock_processor: MockProcessingService = sp.get_service(MockProcessingService)
+    mock_front: MockFrontService = sp.get_service(MockFrontService)
 
-    await mock_processor.close()
+    await mock_front.close()
     await message_service.close()
 
     azure_cret: ClientSecretCredential = sp.get_service(ClientSecretCredential)
@@ -71,10 +79,8 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     await cosmos_client.close()
     await azure_cret.close()
 
-
-app = AppBuilder(ComponentsEnum.front_service) \
+app = AppBuilder(ComponentsEnum.back_service) \
         .with_static() \
-        .with_user_auth() \
         .with_appinsights(False) \
         .with_healthprobes(False) \
         .with_init(app_init) \

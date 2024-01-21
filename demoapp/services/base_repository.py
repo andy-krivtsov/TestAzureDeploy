@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 from typing import Iterable
-from demoapp.models import Order
+from demoapp.models import Order, ProcessingItem, ProcessingStatus
 
 class OrderRepository(ABC):
 
@@ -36,16 +36,49 @@ class OrderRepository(ABC):
     async def close(self):
         pass
 
-class OrderRepositoryException(Exception):
+class ProcessingRepository(ABC):
+
+    @abstractmethod
+    async def create_item(self, item: ProcessingItem):
+        pass
+
+    @abstractmethod
+    async def get_item(self, id: str) -> ProcessingItem:
+        pass
+
+    @abstractmethod
+    async def find_item_for_order(self, order_id: str = None) -> ProcessingItem:
+        pass
+
+    @abstractmethod
+    async def get_items(self, status: ProcessingStatus = None) -> Iterable[ProcessingItem]:
+        pass
+
+    @abstractmethod
+    async def update_item(self, item: ProcessingItem):
+        pass
+
+    @abstractmethod
+    async def delete_item(self, id: str):
+        pass
+
+    @abstractmethod
+    async def delete_all_items(self):
+        pass
+
+    @abstractmethod
+    async def close(self):
+        pass
+
+class RepositoryException(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 
-class OrderAlreadyExistException(OrderRepositoryException):
+class RepositoryAlreadyExistException(RepositoryException):
     def __init__(self, message: str):
         super().__init__(message)
 
-class OrderNotFoundException(OrderRepositoryException):
+class RepositoryNotFoundException(RepositoryException):
     def __init__(self, message: str):
         super().__init__(message)
-
 

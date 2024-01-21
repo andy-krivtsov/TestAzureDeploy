@@ -5,11 +5,11 @@ from demoapp.services.servicebus import MessagingService
 from demoapp.services.websocket import WebSocketManager
 from demoapp.services.cosmosdb import DatabaseService
 from demoapp.services.storage import StorageService
-from demoapp.services.order_repository import OrderRepository, OrderAlreadyExistException, OrderNotFoundException, OrderRepositoryException
-from demoapp.services.mem_order_repository import MemoryOrderRepository
+from demoapp.services.base_repository import OrderRepository, ProcessingRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, RepositoryException
+from demoapp.services.mock_repository import MemoryOrderRepository, MemoryProcessingRepository
 from demoapp.services.cdb_order_repository import CosmosDBOrderRepository
 from demoapp.services.message_service import MessageService, MessageServiceBase
-from demoapp.services.mock_message_service import MockMessageService
+from demoapp.services.mock_message_service import MockMessageService, MockProcessingService, MockFrontService
 from demoapp.services.websocket_service import WebsocketService
 from demoapp.services.local_websocket_service import LocalWebsocketService
 
@@ -23,14 +23,18 @@ __all__ = [
     "WebSocketManager",
     "msal_auth_config",
     "OrderRepository",
+    "ProcessingRepository",
     "MemoryOrderRepository",
-    "OrderAlreadyExistException",
-    "OrderNotFoundException",
-    "OrderRepositoryException",
+    "MemoryProcesssingRepository"
+    "RepositoryAlreadyExistException",
+    "RepositoryNotFoundException",
+    "RepositoryException",
     "CosmosDBOrderRepository",
     "MessageService",
     "MessageServiceBase",
     "MockMessageService",
+    "MockProcessingService"
+    "MockFrontService",
     "WebsocketService",
     "LocalWebsocketService"
 ]

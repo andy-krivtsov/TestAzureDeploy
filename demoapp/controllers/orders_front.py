@@ -12,14 +12,21 @@ from http import HTTPStatus
 from demoapp.app.sp import ServiceProvider
 from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
-from demoapp.models import Customer, ProductItem, Order, PaginationOrdersList, OrderStatusUpdate, WebsocketConnectInfo
+from demoapp.models import Customer, OrderStatus, ProcessingStatus, ProductItem, Order, PaginationOrdersList, OrderStatusUpdate, WebsocketConnectInfo
 from demoapp.app import AppAttributes
-from demoapp.services import AppSettings, OrderRepository, OrderAlreadyExistException, OrderNotFoundException, MessageService, WebsocketService
+from demoapp.services import AppSettings, OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, MessageService, WebsocketService
 
 
 #===============================================================================
 # Callback functions
 #===============================================================================
+
+STATUS_CONVERTING: dict[ProcessingStatus, OrderStatus] = {
+    ProcessingStatus.new : OrderStatus.new,
+    ProcessingStatus.processing: OrderStatus.processing,
+    ProcessingStatus.completed: OrderStatus.completed,
+    ProcessingStatus.error: OrderStatus.error
+}
 
 async def on_status_message(update: OrderStatusUpdate, sp: ServiceProvider):
     try:
@@ -30,12 +37,12 @@ async def on_status_message(update: OrderStatusUpdate, sp: ServiceProvider):
 
         order = await order_repository.get_order(update.order_id)
 
-        order.status = update.new_status
+        order.status = STATUS_CONVERTING[update.new_status]
         await order_repository.update_order(order)
 
         await websocket_service.send_client_order_update([order])
 
-    except OrderNotFoundException:
+    except RepositoryNotFoundException:
         logging.warning("Order not found: id=%s", update.order_id)
 
     except Exception:
@@ -149,7 +156,7 @@ async def post_order(
         await message_service.send_processing_message(order)
 
         return order
-    except OrderAlreadyExistException as exc:
+    except RepositoryAlreadyExistException as exc:
         logging.exception("Error in creating new order")
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail=exc.args)
 

@@ -125,8 +125,9 @@ class AppBuilder:
             msal_auth = MSALAuthorization(client_config=msal_auth_config(self._settings))
             sp.register(MSALAuthorization, msal_auth)
 
+            app.add_middleware(SessionMiddleware, secret_key=self._settings.auth_session_key)
+
             if self._user_auth:
-                app.add_middleware(SessionMiddleware, secret_key=self._settings.auth_session_key)
                 app.include_router(msal_auth.router)
 
         return app

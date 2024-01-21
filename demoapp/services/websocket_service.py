@@ -1,7 +1,7 @@
 from abc import ABC,abstractmethod
 from fastapi import FastAPI
 
-from demoapp.models import Order, WebsocketConnectInfo
+from demoapp.models import Order, WebsocketConnectInfo, ProcessingItem
 from demoapp.services import AppSettings
 
 class WebsocketService(ABC):
@@ -16,6 +16,10 @@ class WebsocketService(ABC):
 
     @abstractmethod
     async def send_client_order_update(self, orders: list[Order]):
+        pass
+
+    @abstractmethod
+    async def send_client_processing_update(self, items: list[ProcessingItem]):
         pass
 
 

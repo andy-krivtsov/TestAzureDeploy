@@ -20,6 +20,7 @@ class StatusTagEnum(str, Enum):
 
 class ComponentsEnum(str, Enum):
     front_service = "front-service"
+    back_service = "back-service"
     db_service = "db-service"
     stor_service = "stor-service"
 
@@ -76,6 +77,12 @@ class OrderStatus(str, Enum):
     completed   = "Completed"
     error       = "Error"
 
+class ProcessingStatus(str, Enum):
+    new         = "New"
+    processing  = "Processing"
+    completed   = "Completed"
+    error       = "Error"
+
 class Customer(BaseModel):
     id: str = Field(..., description="Customer ID")
     name: str = Field(..., description="Customer display name")
@@ -97,13 +104,16 @@ class Order(BaseModel):
     status: OrderStatus = Field(OrderStatus.created, description="Order status")
 
     @staticmethod
-    def get_random(customers: list[Customer], items: list[ProductItem]) -> Order:
+    def get_random(customers: list[Customer], items: list[ProductItem], created: datetime = None) -> Order:
+        if not created:
+            created = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180))
+
         return Order(
             id = str(uuid.uuid4()),
-            created = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180)),
+            created = created,
             customer = random.choice(customers),
             items = [OrderListItem(item=x, count=random.randint(1, 100)) for x in random.choices(items, k=2)],
-            dueDate = datetime.now(timezone.utc) + timedelta(days=random.randint(1, 30)),
+            dueDate = created + timedelta(days=random.randint(1, 30)),
             status = random.choice(list(OrderStatus))
         )
 
@@ -113,7 +123,16 @@ class PaginationOrdersList(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     order_id: str = Field(..., description="Order ID")
-    new_status: OrderStatus = Field(..., description="New order status")
+    new_status: ProcessingStatus = Field(..., description="New order status")
 
 class WebsocketConnectInfo(BaseModel):
     url: AnyUrl = Field(..., description="Connection URL for websocket notification connection")
+
+
+class ProcessingItem(BaseModel):
+    id: str = Field(..., description="Item ID")
+    created: datetime = Field(..., description="Item creation date and time (processing start time)")
+    order: Order = Field(..., description="Processing order")
+    processing_time: int = Field(0, description="Time for order processing in seconds")
+    finished: Optional[datetime] = Field(None, description="Item processing finishing date and time")
+    status: ProcessingStatus = Field(ProcessingStatus.processing, description="Item status")

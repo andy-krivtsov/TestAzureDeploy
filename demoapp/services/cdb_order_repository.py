@@ -8,16 +8,16 @@ from azure.cosmos.exceptions import CosmosHttpResponseError
 from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
 
-from demoapp.services.order_repository import OrderRepository, OrderAlreadyExistException, OrderNotFoundException, OrderRepositoryException
+from demoapp.services.base_repository import OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, RepositoryException
 from demoapp.models import Order
 
-def get_repository_exception(exc: CosmosHttpResponseError) -> OrderRepositoryException:
+def get_repository_exception(exc: CosmosHttpResponseError) -> RepositoryException:
     if exc.status_code == HTTPStatus.CONFLICT:
-        return OrderAlreadyExistException(exc.message)
+        return RepositoryAlreadyExistException(exc.message)
     elif exc.status_code == HTTPStatus.NOT_FOUND:
-        return OrderNotFoundException(exc.message)
+        return RepositoryNotFoundException(exc.message)
     else:
-        return OrderRepositoryException(f"{exc.status_code}: {exc.message}")
+        return RepositoryException(f"{exc.status_code}: {exc.message}")
 
 def convert_cosmosdb_exceptions(f):
     @wraps(f)

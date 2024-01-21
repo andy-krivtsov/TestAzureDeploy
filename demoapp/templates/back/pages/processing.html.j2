@@ -1,0 +1,115 @@
+{% extends "app-base.html.j2" %}
+
+{% block main_content %}
+<script type="module">
+  import { deleteProcessingItems, generateTestItems, getWebsocketInfo, webSocketConnect } from "/static/processing-api.js"
+  import { datetimeFormat } from "/static/utils.js"
+  import { updateProcessingTable } from "/static/processing.js"
+
+  window.addEventListener('load', async (event) => {
+    const info = await getWebsocketInfo()
+    console.log(`WebSocket URL: ${info.url}`)
+
+    setTimeout(webSocketConnect, 0, info.url, (msg) => {
+      updateProcessingTable(msg)
+    })
+  });
+
+  function tableDateFormatter(value) {
+    return value ? datetimeFormat(new Date(value)) : ""
+  }
+
+  async function onDeleteItems(generateNew = false) {
+    console.log("Clear processing items DB (server-side operation)")
+
+    const modalName =  generateNew ? "clearAndGenerateModal" : "clearModal"
+    const myModal = new bootstrap.Modal(document.getElementById(modalName))
+    await myModal.show()
+
+    await deleteProcessingItems()
+    if (generateNew) {
+      await generateTestItems()
+    }
+
+    setTimeout(async () => {
+      $(`#fullProcessingList`).bootstrapTable('refresh')
+      await myModal.hide()
+    }, "500")
+  }
+
+  window.onDeleteItems = onDeleteItems
+  window.tableDateFormatter = tableDateFormatter
+</script>
+<!-- Content part (new order page) -->
+<div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1800px;">
+
+  <!-- Processing table card -->
+  <div class="card bg-body-tertiary mb-4">
+    <div class="card-body">
+      <div class="d-flex flex-row align-items-center mb-3">
+        <div class="me-auto"><h5 class="card-title mb-0">Processing Operations List</h5></div>
+        <button type="button" class="btn btn-outline-secondary px-3 py-2 me-3" onclick="onDeleteItems(false);">Clear list</button>
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="onDeleteItems(true);">Clear and generate test items</button>
+      </div>
+      <table id="fullProcessingList"
+        data-url="/api/processing"
+        data-classes="table table-hover table-sm table-bordered"
+        data-toggle="table"
+        data-unique-id="id"
+        data-sort-name="created"
+        data-sort-order="desc"
+        data-pagination="true"
+        data-side-pagination="client"
+        data-page-size="25">
+        <thead>
+          <tr>
+            <th scope="col" data-field="id" data-sortable="true">ID</th>
+            <th scope="col" data-field="created" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Created</th>
+            <th scope="col" data-field="order.id" data-sortable="true">Order ID</th>
+            <th scope="col" data-field="order.customer.name" data-sortable="true">Customer</th>
+            <th scope="col" data-field="processing_time" data-align="center" data-sortable="true">Time sec</th>
+            <th scope="col" data-align="center" data-sortable="true">Remaining</th>
+            <th scope="col" data-field="finished" data-sortable="true" data-formatter="tableDateFormatter" data-align="center">Finished</th>
+            <th scope="col" data-field="status" data-align="center" data-sortable="true">Status</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal fade" id="clearModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">Delete all Processing Items</h1>
+        </div>
+        <div class="modal-body">
+          Please wait while we cleaning Processing Items DB...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="clearAndGenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">Generate new test items</h1>
+        </div>
+        <div class="modal-body">
+          Please wait while we are generating new test items...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

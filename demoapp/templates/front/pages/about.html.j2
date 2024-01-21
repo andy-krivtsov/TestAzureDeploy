@@ -1,0 +1,21 @@
+{% extends "app-base.html.j2" %}
+
+{% block main_content %}
+<!-- About page -->
+<div class="d-flex flex-column flex-fill p-4 overflow-auto" style="max-width: 1000px;">
+  <h1>Python Demo Application</h1>
+  <h4 class="mb-3">Azure simple microservices-based demo application</h4>
+
+  <h5>Used technologies:</h5>
+  <ul class="mb-3">
+    <li>Azure Container Apps</li>
+    <li>Azure Service Bus</li>
+    <li>Azure DevOps</li>
+    <li>Azure App Insights</li>
+    <li>Azure Cosmos DB</li>
+    <li>Azure Storage</li>
+  </ul>
+  <h5>Architecture diagram:</h5>
+  <img src="static/azure-demo.png" width="740" class="m-2 border border-light-subtle"/>
+</div>
+{% endblock %}

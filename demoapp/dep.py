@@ -8,15 +8,14 @@ from fastapi_msal import MSALAuthorization, IDTokenClaims
 
 from demoapp.app.sp import ServiceProvider
 from demoapp.services import (AppSettings, MessageList, MSALOptionalScheme, MessagingService, WebSocketManager,
-                              OrderRepository, MessageService, WebsocketService)
+                              OrderRepository, ProcessingRepository, MessageService, WebsocketService)
 
 def get_global_service(req: HTTPConnection, T: Type) -> Any:
     sp: ServiceProvider = req.app.state.sp
     return sp.get_service(T)
 
-def app_templates() -> Jinja2Templates:
-    tpl_path = Path(__file__).absolute().parent.joinpath("templates")
-    return Jinja2Templates(directory=tpl_path)
+def app_templates(req: HTTPConnection) -> Jinja2Templates:
+    return get_global_service(req, Jinja2Templates)
 
 def app_settings(req: HTTPConnection) -> AppSettings:
     return get_global_service(req, AppSettings)
@@ -41,6 +40,9 @@ def websocket_manager(req: HTTPConnection) -> WebSocketManager:
 
 def order_repository(req: HTTPConnection) -> OrderRepository:
     return get_global_service(req, OrderRepository)
+
+def processing_repository(req: HTTPConnection) -> ProcessingRepository:
+    return get_global_service(req, ProcessingRepository)
 
 def message_service(req: HTTPConnection) -> MessageService:
     return get_global_service(req, MessageService)

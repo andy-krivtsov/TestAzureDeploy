@@ -12,7 +12,7 @@
   async function onClearAndGenerate() {
     console.log("Clear DB and generate new test orders in DB (server-side operation)")
 
-    const myModal = new bootstrap.Modal(document.getElementById('listGenerateModal'))
+    const myModal = new bootstrap.Modal(document.getElementById('clearAndGenerateModal'))
 
     await myModal.show()
 
@@ -25,7 +25,24 @@
     }, "500")
   }
 
+  async function onDeleteAllOrders() {
+    console.log("Remove all orders from DB (server-side operation)")
+
+    const myModal = new bootstrap.Modal(document.getElementById('clearModal'))
+
+    await myModal.show()
+
+    await deleteOrders()
+
+    setTimeout(async () => {
+      $(`#fullOrderList`).bootstrapTable('refresh')
+      await myModal.hide()
+    }, "500")
+  }
+
+
   window.onClearAndGenerate = onClearAndGenerate
+  window.onDeleteAllOrders = onDeleteAllOrders
 
   function tableDateFormatter(value) {
     return datetimeFormat(new Date(value))
@@ -57,6 +74,7 @@
     <div class="card-body">
       <div class="d-flex flex-row align-items-center mb-3">
         <div class="me-auto"><h5 class="card-title mb-0">Orders List</h5></div>
+        <button type="button" class="btn btn-outline-secondary px-3 py-2 me-3" onclick="onDeleteAllOrders()">Clear orders</button>
         <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="onClearAndGenerate()">Clear and generate test orders</button>
       </div>
       <table id="fullOrderList" class="table table-hover mb-4 table-sm"
@@ -88,7 +106,7 @@
   </div>
 
   <!-- Modal -->
-  <div class="modal fade" id="listGenerateModal" tabindex="-1">
+  <div class="modal fade" id="clearAndGenerateModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -96,6 +114,22 @@
         </div>
         <div class="modal-body">
           Please wait while we are generating new test orders...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="clearModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">Clear Order DB</h1>
+        </div>
+        <div class="modal-body">
+          Please wait while we cleaning Order DB...
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>

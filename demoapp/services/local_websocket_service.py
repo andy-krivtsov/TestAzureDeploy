@@ -5,7 +5,7 @@ from fastapi.websockets import WebSocketState
 from fastapi.encoders import jsonable_encoder
 
 from demoapp.services.websocket_service import WebsocketService
-from demoapp.models import Order, WebsocketConnectInfo
+from demoapp.models import Order, ProcessingItem, WebsocketConnectInfo
 from demoapp.services import AppSettings
 from demoapp import dep
 from fastapi_msal.models import UserInfo
@@ -18,11 +18,11 @@ ws_connections: dict[str, WebSocket] = {}
 @router.websocket("/notifications/feed")
 async def notify_websocket(
             websocket: WebSocket,
-            current_user: UserInfo = Depends(dep.require_auth_scheme)
+            current_user: UserInfo = Depends(dep.optional_auth_scheme)
         ):
 
     id = str(uuid.uuid4())
-    logging.info("WebSocket: new link connection: %s, user=%s", id, current_user.preferred_username)
+    logging.info("WebSocket: new link connection: %s", id)
 
     await websocket.accept()
     ws_connections[id] = websocket
@@ -53,6 +53,12 @@ class LocalWebsocketService(WebsocketService):
         return WebsocketConnectInfo(url=ws_url)
 
     async def send_client_order_update(self, orders: list[Order]):
+        await self._send_impl(orders)
+
+    async def send_client_processing_update(self, items: list[ProcessingItem]):
+        await self._send_impl(items)
+
+    async def _send_impl(self, data: list):
         for id, con in ws_connections.items():
             try:
                 logging.info("WebSocket: send messages to connection=%s", id)
@@ -61,7 +67,6 @@ class LocalWebsocketService(WebsocketService):
                     del ws_connections[id]
                     continue
 
-                await con.send_json(jsonable_encoder(orders))
+                await con.send_json(jsonable_encoder(data))
             except Exception:
                 logging.exception("Error with connection!")
-
