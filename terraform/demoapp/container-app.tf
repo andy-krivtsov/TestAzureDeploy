@@ -35,7 +35,7 @@ locals {
         AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
       }
     }
-    "backdb" = {
+    "back" = {
       args = ["--host", "0.0.0.0", "demoapp.orders_back:app"]
       envs = {
         OTEL_SERVICE_NAME="Back"
