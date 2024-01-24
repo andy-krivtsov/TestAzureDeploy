@@ -19,7 +19,7 @@ from demoapp.app import AppBuilder
 from demoapp.models import ComponentsEnum
 from demoapp.controllers.orders_front import router, on_status_message
 from demoapp.services import (AppSettings, OrderRepository, CosmosDBOrderRepository,
-                              MessageService, MockMessageService, MockProcessingService, WebsocketService, LocalWebsocketService)
+                              MessageService, ServiceBusMessageService, MockProcessingService, WebsocketService, LocalWebsocketService)
 
 
 async def app_init(app: FastAPI, sp: ServiceProvider):
@@ -50,19 +50,20 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     websocket_service = LocalWebsocketService(app, settings)
     sp.register(WebsocketService, websocket_service)
 
-    message_service = MockMessageService(sp)
+    #message_service = MockMessageService(sp)
+    message_service = ServiceBusMessageService(sp)
     message_service.subscribe_status_messages(on_status_message)
     sp.register(MessageService, message_service)
 
-    mock_processor = MockProcessingService(message_service)
-    sp.register(MockProcessingService, mock_processor)
+    # mock_processor = MockProcessingService(message_service)
+    # sp.register(MockProcessingService, mock_processor)
 
 
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
-    mock_processor: MockProcessingService = sp.get_service(MockProcessingService)
+    # mock_processor: MockProcessingService = sp.get_service(MockProcessingService)
 
-    await mock_processor.close()
+    # await mock_processor.close()
     await message_service.close()
 
     azure_cret: ClientSecretCredential = sp.get_service(ClientSecretCredential)
@@ -75,7 +76,7 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
 app = AppBuilder(ComponentsEnum.front_service) \
         .with_static() \
         .with_user_auth() \
-        .with_appinsights(False) \
+        .with_appinsights(True) \
         .with_healthprobes(False) \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \

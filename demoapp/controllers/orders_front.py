@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from typing import Annotated, Iterable, Union, cast
@@ -22,7 +23,6 @@ from demoapp.services import AppSettings, OrderRepository, RepositoryAlreadyExis
 #===============================================================================
 
 STATUS_CONVERTING: dict[ProcessingStatus, OrderStatus] = {
-    ProcessingStatus.new : OrderStatus.new,
     ProcessingStatus.processing: OrderStatus.processing,
     ProcessingStatus.completed: OrderStatus.completed,
     ProcessingStatus.error: OrderStatus.error
@@ -149,9 +149,12 @@ async def post_order(
             current_user: UserInfo = Depends(dep.require_auth_scheme)) -> Order:
 
     try:
-        logging.info("POST /api/orders: create new order: %s", order.model_dump_json())
+        logging.info("POST /api/orders: create new order: %s", order.model_dump_json(by_alias=True))
+
+        order.status = OrderStatus.new
         await repository.create_order(order)
-        await websocket_service.send_client_order_update([order])
+
+        asyncio.create_task(websocket_service.send_client_order_update([order]))
 
         await message_service.send_processing_message(order)
 

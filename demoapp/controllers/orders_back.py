@@ -5,25 +5,25 @@ import random
 from typing import Annotated, Iterable, Union, cast
 from datetime import datetime,timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import TemplateNotFound
-from fastapi_msal.models import UserInfo
 from opentelemetry import baggage, trace, context
 from http import HTTPStatus
 
 from demoapp.app.sp import ServiceProvider
 from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
-from demoapp.models import Customer, Order, ProcessingItem, OrderStatus, OrderStatusUpdate, ProcessingStatus, ProductItem, WebsocketConnectInfo
+from demoapp.models import Customer, Order, ProcessingItem, OrderStatusUpdate, ProcessingStatus, ProductItem, WebsocketConnectInfo
 from demoapp.app import AppAttributes
-from demoapp.services import AppSettings, ProcessingRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, MessageService, WebsocketService
+from demoapp.services import AppSettings, ProcessingRepository, MessageService, WebsocketService
 
 
 #===============================================================================
 # Callback functions
 #===============================================================================
+
 
 async def send_status_update(item: ProcessingItem, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
@@ -38,48 +38,48 @@ async def send_status_update(item: ProcessingItem, sp: ServiceProvider):
 
 
 async def on_processing_message(order: Order, sp: ServiceProvider):
+    errorFlag = True
+    new_item = ProcessingItem(
+        id=str(uuid.uuid4()),
+        order=order,
+        created=datetime.now(timezone.utc),
+        processing_time=random.randint(10, 30),
+        status=ProcessingStatus.processing
+    )
+
     try:
         repository: ProcessingRepository = sp.get_service(ProcessingRepository)
+        logging.info("Start order processing, id: %s, time: %s seconds", order.id, new_item.processing_time)
 
-        processing_time = random.randint(10, 30)
-        new_item = ProcessingItem(
-            id=str(uuid.uuid4()),
-            order=order,
-            created=datetime.now(timezone.utc),
-            processing_time=processing_time,
-            status=ProcessingStatus.processing
-        )
         await repository.create_item(new_item)
+        errorFlag = False
 
-        logging.info("Start order processing, id: %s, time: %s seconds", order.id, processing_time)
-        await send_status_update(new_item, sp)
+        asyncio.create_task(order_process(new_item, sp))
+    finally:
+        if errorFlag:
+            new_item.status = ProcessingStatus.error
+            await send_status_update(new_item, sp)
 
-    except Exception:
-        logging.exception("Error in status update processing!")
-
-
-async def background_order_processing(sp: ServiceProvider):
+async def order_process(item: ProcessingItem, sp: ServiceProvider):
     try:
+        await send_status_update(item, sp)
+
+        await asyncio.sleep(item.processing_time)
+
         repository: ProcessingRepository = sp.get_service(ProcessingRepository)
 
-        while True:
-            logging.info("Background orders processing")
+        d = datetime.now(timezone.utc)
+        logging.info("Order processing is finished, id = %s, order = %s", item.id, item.order.id)
 
-            d = datetime.now(timezone.utc)
+        item.finished = d
+        item.status = ProcessingStatus.completed
+        await repository.update_item(item)
 
-            for item in await repository.get_items(ProcessingStatus.processing):
-                if d >= item.created + timedelta(seconds=item.processing_time):
-                    logging.info("Order processing is finished, id = %s, order = %s", item.id, item.order.id)
-                    item.finished = d
-                    item.status = ProcessingStatus.completed
-                    await repository.update_item(item)
-
-                    await send_status_update(item, sp)
-
-            await asyncio.sleep(1)
-    except asyncio.CancelledError:
-        logging.info("Orders processing background task is canceled!")
-
+        await send_status_update(item, sp)
+    except Exception as exc:
+        logging.exception("Error in processing order: %s", item.order.id)
+        item.status = ProcessingStatus.error
+        await send_status_update(item, sp)
 
 #===============================================================================
 # Routing (HTTP path functions)

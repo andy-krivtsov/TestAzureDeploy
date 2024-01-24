@@ -18,9 +18,9 @@ from fastapi.templating import Jinja2Templates
 from demoapp.app.sp import ServiceProvider
 from demoapp.app import AppBuilder
 from demoapp.models import ComponentsEnum
-from demoapp.controllers.orders_back import router, on_processing_message, background_order_processing
-from demoapp.services import (AppSettings, ProcessingRepository, MemoryProcessingRepository,
-                              MessageService, MockFrontService, MockMessageService, WebsocketService, LocalWebsocketService)
+from demoapp.controllers.orders_back import router, on_processing_message
+from demoapp.services import (AppSettings, ProcessingRepository, CosmosDBProcessingRepository,
+                              MessageService, MockFrontService, ServiceBusMessageService, WebsocketService, LocalWebsocketService)
 
 processing_task: asyncio.Task = None
 
@@ -44,33 +44,22 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     sp.register(ClientSecretCredential, azure_cret)
     sp.register(CosmosClient, cosmos_client)
 
-    repository = MemoryProcessingRepository()
+    repository = CosmosDBProcessingRepository(
+        cosmos_client=cosmos_client,
+        db_name=settings.db_database,
+        container_name=settings.db_container
+    )
     sp.register(ProcessingRepository, repository)
-
-    # repository = CosmosDBOrderRepository(
-    #     cosmos_client=cosmos_client,
-    #     db_name=settings.db_database,
-    #     container_name=settings.db_container
-    # )
-    # sp.register(OrderRepository, repository)
 
     websocket_service = LocalWebsocketService(app, settings)
     sp.register(WebsocketService, websocket_service)
 
-    message_service = MockMessageService(sp)
+    message_service = ServiceBusMessageService(sp)
     message_service.subscribe_processing_messages(on_processing_message)
     sp.register(MessageService, message_service)
 
-    mock_front = MockFrontService(message_service)
-    sp.register(MockFrontService, mock_front)
-
-    processing_task = asyncio.create_task(background_order_processing(sp))
-
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
-    mock_front: MockFrontService = sp.get_service(MockFrontService)
-
-    await mock_front.close()
     await message_service.close()
 
     azure_cret: ClientSecretCredential = sp.get_service(ClientSecretCredential)
@@ -81,7 +70,7 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
 
 app = AppBuilder(ComponentsEnum.back_service) \
         .with_static() \
-        .with_appinsights(False) \
+        .with_appinsights(True) \
         .with_healthprobes(False) \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \

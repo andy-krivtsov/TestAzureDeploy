@@ -7,7 +7,9 @@ from datetime import datetime,timedelta, timezone
 from typing import Any, Iterable, Optional
 from enum import Enum
 from datetime import datetime, timezone, date
-from pydantic import BaseModel, Field, AnyUrl
+from pydantic import BaseModel, Field, AnyUrl, ConfigDict
+from pydantic.alias_generators import to_camel
+
 
 def json_default(obj: Any) -> Any:
     return obj.isoformat() if isinstance(obj, datetime) or isinstance(obj, date) else None
@@ -72,7 +74,6 @@ class MessageViewList(BaseModel):
 
 class OrderStatus(str, Enum):
     new         = "New"
-    created     = "Created"
     processing  = "Processing"
     completed   = "Completed"
     error       = "Error"
@@ -84,24 +85,32 @@ class ProcessingStatus(str, Enum):
     error       = "Error"
 
 class Customer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     id: str = Field(..., description="Customer ID")
     name: str = Field(..., description="Customer display name")
 
 class ProductItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     id: str = Field(..., description="Product item ID")
     name: str = Field(..., description="Item display name")
 
 class OrderListItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     item: ProductItem = Field(..., description="Product item")
     count: int = Field(0, description="Count of items")
 
 class Order(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     id: str = Field(..., description="Order ID")
     created: datetime = Field(..., description="Order creation date and time")
     customer: Customer = Field(..., description="Customer")
     items: list[OrderListItem] = Field([], description="Items list")
-    due_date: datetime = Field(..., alias="dueDate", description="Order due date")
-    status: OrderStatus = Field(OrderStatus.created, description="Order status")
+    due_date: datetime = Field(..., description="Order due date")
+    status: OrderStatus = Field(OrderStatus.new, description="Order status")
 
     @staticmethod
     def get_random(customers: list[Customer], items: list[ProductItem], created: datetime = None) -> Order:
@@ -113,23 +122,30 @@ class Order(BaseModel):
             created = created,
             customer = random.choice(customers),
             items = [OrderListItem(item=x, count=random.randint(1, 100)) for x in random.choices(items, k=2)],
-            dueDate = created + timedelta(days=random.randint(1, 30)),
+            due_date = created + timedelta(days=random.randint(1, 30)),
             status = random.choice(list(OrderStatus))
         )
 
 class PaginationOrdersList(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     total: int = Field(..., description="Total number of orders in store")
     rows: Iterable[Order] = Field( [], description="Orders for page")
 
 class OrderStatusUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     order_id: str = Field(..., description="Order ID")
-    new_status: ProcessingStatus = Field(..., description="New order status")
+    new_status: ProcessingStatus = Field(ProcessingStatus.new, description="New order status")
 
 class WebsocketConnectInfo(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     url: AnyUrl = Field(..., description="Connection URL for websocket notification connection")
 
-
 class ProcessingItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     id: str = Field(..., description="Item ID")
     created: datetime = Field(..., description="Item creation date and time (processing start time)")
     order: Order = Field(..., description="Processing order")

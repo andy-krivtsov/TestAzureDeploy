@@ -7,6 +7,7 @@
         "MSAL",
         "onchange",
         "opentelemetry",
+        "otel",
         "pydantic",
         "servicebus",
         "starlette",

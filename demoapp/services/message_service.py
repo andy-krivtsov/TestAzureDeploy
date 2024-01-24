@@ -72,7 +72,8 @@ class MessageServiceBase(MessageService):
             await f(update, self._sp)
 
     async def close(self):
+        super().close()
         self._order_processors.clear()
         self._status_processors.clear()
-        super().close()
+
 

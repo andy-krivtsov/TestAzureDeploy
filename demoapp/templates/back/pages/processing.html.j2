@@ -3,8 +3,8 @@
 {% block main_content %}
 <script type="module">
   import { deleteProcessingItems, generateTestItems, getWebsocketInfo, webSocketConnect } from "/static/processing-api.js"
-  import { datetimeFormat } from "/static/utils.js"
-  import { updateProcessingTable } from "/static/processing.js"
+  import { datetimeFormat, nullFieldFormater, tableDateFormatter } from "/static/utils.js"
+  import { updateProcessingTable, processingTimeFormat, updateRemainingTime, processingRowStyle } from "/static/processing.js"
 
   window.addEventListener('load', async (event) => {
     const info = await getWebsocketInfo()
@@ -13,11 +13,10 @@
     setTimeout(webSocketConnect, 0, info.url, (msg) => {
       updateProcessingTable(msg)
     })
+
+    setTimeout(updateRemainingTime, 100)
   });
 
-  function tableDateFormatter(value) {
-    return value ? datetimeFormat(new Date(value)) : ""
-  }
 
   async function onDeleteItems(generateNew = false) {
     console.log("Clear processing items DB (server-side operation)")
@@ -37,8 +36,13 @@
     }, "500")
   }
 
+
   window.onDeleteItems = onDeleteItems
+  window.nullFormat = nullFieldFormater
   window.tableDateFormatter = tableDateFormatter
+  window.processingTimeFormat = processingTimeFormat
+  window.tableDateFormatter = tableDateFormatter
+  window.processingRowStyle = processingRowStyle
 </script>
 <!-- Content part (new order page) -->
 <div class="d-flex flex-column flex-fill p-3 overflow-auto" style="max-width: 1800px;">
@@ -63,14 +67,13 @@
         data-page-size="25">
         <thead>
           <tr>
-            <th scope="col" data-field="id" data-sortable="true">ID</th>
-            <th scope="col" data-field="created" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Created</th>
-            <th scope="col" data-field="order.id" data-sortable="true">Order ID</th>
-            <th scope="col" data-field="order.customer.name" data-sortable="true">Customer</th>
-            <th scope="col" data-field="processing_time" data-align="center" data-sortable="true">Time sec</th>
-            <th scope="col" data-align="center" data-sortable="true">Remaining</th>
-            <th scope="col" data-field="finished" data-sortable="true" data-formatter="tableDateFormatter" data-align="center">Finished</th>
-            <th scope="col" data-field="status" data-align="center" data-sortable="true">Status</th>
+            <th scope="col" data-field="id" data-cell-style="processingRowStyle" data-sortable="true">ID</th>
+            <th scope="col" data-field="created" data-cell-style="processingRowStyle" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Created</th>
+            <th scope="col" data-field="order.id" data-cell-style="processingRowStyle" data-sortable="true">Order ID</th>
+            <th scope="col" data-field="order.customer.name" data-cell-style="processingRowStyle" data-sortable="true">Customer</th>
+            <th scope="col" data-field="processingTime" data-cell-style="processingRowStyle" data-align="center" data-formatter="processingTimeFormat" data-sortable="true">Time</th>
+            <th scope="col" data-field="finished" data-cell-style="processingRowStyle" data-sortable="true" data-formatter="tableDateFormatter" data-align="center">Finished</th>
+            <th scope="col" data-field="status" data-cell-style="processingRowStyle" data-align="center" data-sortable="true">Status</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">

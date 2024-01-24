@@ -32,3 +32,14 @@ export function datetimeFormat(d) {
 
     return d.toLocaleString('ru-RU', options)
 }
+
+export function nullFieldFormater(d) {
+    if (d == undefined || d == null) {
+        return ""
+    }
+    return d
+}
+
+export function tableDateFormatter(value) {
+    return value ? datetimeFormat(new Date(value)) : ""
+  }

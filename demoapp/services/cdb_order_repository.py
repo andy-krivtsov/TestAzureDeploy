@@ -1,34 +1,13 @@
 import logging
 from datetime import datetime,timedelta, timezone
 from typing import Iterable
-from functools import wraps
 
 from azure.cosmos.aio import CosmosClient
-from azure.cosmos.exceptions import CosmosHttpResponseError
-from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
 
-from demoapp.services.base_repository import OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, RepositoryException
+from demoapp.services.base_repository import OrderRepository
 from demoapp.models import Order
-
-def get_repository_exception(exc: CosmosHttpResponseError) -> RepositoryException:
-    if exc.status_code == HTTPStatus.CONFLICT:
-        return RepositoryAlreadyExistException(exc.message)
-    elif exc.status_code == HTTPStatus.NOT_FOUND:
-        return RepositoryNotFoundException(exc.message)
-    else:
-        return RepositoryException(f"{exc.status_code}: {exc.message}")
-
-def convert_cosmosdb_exceptions(f):
-    @wraps(f)
-    def wrapper(*args, **kwds):
-        try:
-            return f(*args, **kwds)
-        except CosmosHttpResponseError as exc:
-            raise get_repository_exception(exc)
-
-    return wrapper
-
+from demoapp.services.cdb_exceptions import convert_cosmosdb_exceptions
 
 class CosmosDBOrderRepository(OrderRepository):
     def __init__(self, cosmos_client: CosmosClient, db_name: str, container_name: str):
@@ -43,7 +22,7 @@ class CosmosDBOrderRepository(OrderRepository):
 
     @convert_cosmosdb_exceptions
     async def create_order(self, order: Order):
-        logging.info("Create order in DB: %s", order.model_dump_json())
+        logging.info("Create order in DB: %s", order.model_dump_json(by_alias=True))
 
         await self._container.create_item(jsonable_encoder(order))
 
@@ -72,7 +51,7 @@ class CosmosDBOrderRepository(OrderRepository):
         return f"ORDER BY c.{prop_name} {order.upper()}"
 
 
-    def build_get_query(self, active: bool, limit: int, offset: int, sort: str, order: str):
+    def build_get_query(self, active: bool, limit: int, offset: int, sort: str, order: str) -> str:
         if limit < 0 or offset < 0:
             raise ValueError("Incorrect OFFSET or LIMIT")
 

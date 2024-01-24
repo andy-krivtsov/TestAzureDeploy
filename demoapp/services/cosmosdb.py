@@ -49,7 +49,7 @@ class DatabaseService:
         return self._container
 
     async def write_message(self, message: Message):
-        logging.info(f"Write message to DB: {message.model_dump_json()}, sessionId: {self.sessionId}")
+        logging.info(f"Write message to DB: {message.model_dump_json(by_alias=True)}, sessionId: {self.sessionId}")
 
         msg = message.model_dump()
         ret = await self.container.create_item({

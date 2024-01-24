@@ -30,3 +30,5 @@ class AppSettings(BaseSettings):
     app_insights_constr: str = Field("", description="App Insights connection string")
 
     git_commit_sha: str = Field("", description="Git commit of this build")
+
+    otel_service_name: str = Field("", description="Open Telemetry service name")
