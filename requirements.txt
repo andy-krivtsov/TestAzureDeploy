@@ -6,6 +6,8 @@ pydantic-settings
 python-dotenv
 uvicorn[standard]
 fastapi_msal
+msal
+msal-extensions
 async-signals
 websockets
 itsdangerous

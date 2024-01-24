@@ -10,7 +10,7 @@ from azure.servicebus.exceptions import MessageLockLostError, SessionLockLostErr
 
 from demoapp.app.sp import ServiceProvider
 from demoapp.services.settings import AppSettings
-from demoapp.services.message_service import MessageServiceBase
+from demoapp.services.message_base import MessageServiceBase
 from demoapp.models import Order, OrderStatusUpdate
 from pydantic import BaseModel
 

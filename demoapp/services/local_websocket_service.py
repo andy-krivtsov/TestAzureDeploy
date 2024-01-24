@@ -4,7 +4,7 @@ from fastapi import FastAPI, APIRouter, WebSocket, Depends, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from fastapi.encoders import jsonable_encoder
 
-from demoapp.services.websocket_service import WebsocketService
+from demoapp.services.interface.websocket import WebsocketService
 from demoapp.models import Order, ProcessingItem, WebsocketConnectInfo
 from demoapp.services import AppSettings
 from demoapp import dep

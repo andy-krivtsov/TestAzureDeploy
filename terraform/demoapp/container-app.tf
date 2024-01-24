@@ -28,11 +28,11 @@ locals {
     "front" = {
       args = ["--host", "0.0.0.0", "demoapp.orders_front:app"]
       envs = {
+        OTEL_SERVICE_NAME="Front"
         SERVICEBUS_STATUS_SUB = azurerm_servicebus_subscription.front_status_sub.name
         SERVICEBUS_ORDERS_SUB = ""
-        OTEL_SERVICE_NAME="Front"
-        AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
         DB_CONTAINER = azurerm_cosmosdb_sql_container.orders.name
+        AUTH_PUBLIC_URL="https://front${var.hostnameSuffix}.${var.customDnsZone}"
       }
     }
     "backdb" = {
@@ -42,6 +42,7 @@ locals {
         SERVICEBUS_STATUS_SUB = ""
         SERVICEBUS_ORDERS_SUB = azurerm_servicebus_subscription.back_orders_sub.name
         DB_CONTAINER = azurerm_cosmosdb_sql_container.processing.name
+        AUTH_PUBLIC_URL="https://back${var.hostnameSuffix}.${var.customDnsZone}"
       }
     }
   }

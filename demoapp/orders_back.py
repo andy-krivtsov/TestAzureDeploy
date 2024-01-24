@@ -70,8 +70,8 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
 
 app = AppBuilder(ComponentsEnum.back_service) \
         .with_static() \
-        .with_appinsights(True) \
-        .with_healthprobes(False) \
+        .with_appinsights() \
+        .with_healthprobes() \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \
         .build()

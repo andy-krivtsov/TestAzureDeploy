@@ -25,5 +25,5 @@ EXPOSE 8000/tcp
 
 ENTRYPOINT [ "/usr/local/bin/uvicorn" ]
 
-CMD ["--host", "0.0.0.0", "demoapp.front_main:app"]
+CMD ["--host", "0.0.0.0", "demoapp.orders_front:app"]
 

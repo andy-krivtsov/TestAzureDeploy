@@ -3,7 +3,7 @@ import uuid
 import logging
 from typing import Any, Iterable
 from datetime import datetime,timedelta, timezone
-from demoapp.services.base_repository import OrderRepository, ProcessingRepository, RepositoryAlreadyExistException, RepositoryNotFoundException
+from demoapp.services.interface.repository import OrderRepository, ProcessingRepository, RepositoryAlreadyExistException, RepositoryNotFoundException
 from demoapp.models import Order, OrderStatus, Customer, ProductItem, ProcessingItem, ProcessingStatus
 
 class MemoryOrderRepository(OrderRepository):

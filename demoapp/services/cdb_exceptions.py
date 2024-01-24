@@ -1,7 +1,7 @@
 from functools import wraps
 from http import HTTPStatus
 from azure.cosmos.exceptions import CosmosHttpResponseError
-from demoapp.services.base_repository import RepositoryAlreadyExistException, RepositoryNotFoundException, RepositoryException
+from demoapp.services.interface.repository import RepositoryAlreadyExistException, RepositoryNotFoundException, RepositoryException
 
 def get_repository_exception(exc: CosmosHttpResponseError) -> RepositoryException:
     if exc.status_code == HTTPStatus.CONFLICT:

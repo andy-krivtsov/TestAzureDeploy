@@ -5,7 +5,7 @@ from typing import Iterable
 from azure.cosmos.aio import CosmosClient
 from fastapi.encoders import jsonable_encoder
 
-from demoapp.services.base_repository import OrderRepository
+from demoapp.services.interface.repository import OrderRepository
 from demoapp.models import Order
 from demoapp.services.cdb_exceptions import convert_cosmosdb_exceptions
 

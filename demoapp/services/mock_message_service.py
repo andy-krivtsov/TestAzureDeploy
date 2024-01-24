@@ -4,7 +4,8 @@ import random
 import uuid
 
 from demoapp.app.sp import ServiceProvider
-from demoapp.services.message_service import MessageServiceBase, MessageService
+from demoapp.services.interface.messaging import MessageService
+from demoapp.services.message_base import MessageServiceBase
 from demoapp.models import Customer, Order, OrderStatusUpdate, ProcessingStatus, ProductItem
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
