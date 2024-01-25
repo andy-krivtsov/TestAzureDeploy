@@ -3,7 +3,7 @@ import logging
 import sys
 from uvicorn.logging import AccessFormatter, ColourizedFormatter
 
-from demoapp.services import AppSettings
+from demoapp.services.settings import AppSettings
 
 PROBE_FILTER = "/health"
 

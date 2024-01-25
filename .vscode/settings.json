@@ -13,7 +13,8 @@
         "starlette",
         "templating",
         "uviconrn",
-        "uvicorn"
+        "uvicorn",
+        "webpubsub"
     ],
     "svg.preview.background": "custom",
     "python.autoComplete.extraPaths": [

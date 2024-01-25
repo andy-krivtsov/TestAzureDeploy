@@ -61,7 +61,7 @@ class ServiceBusMessageService(MessageServiceBase):
             self._status_receiver_task = None
 
     async def close(self):
-        super().close()
+        await super().close()
         if self._order_receiver_task:
             self._order_receiver_task.cancel()
 

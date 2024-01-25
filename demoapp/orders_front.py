@@ -19,7 +19,8 @@ from demoapp.app import AppBuilder
 from demoapp.models import ComponentsEnum
 from demoapp.controllers.orders_front import router, on_status_message
 from demoapp.services import (AppSettings, OrderRepository, CosmosDBOrderRepository,
-                              MessageService, ServiceBusMessageService, MockProcessingService, WebsocketService, LocalWebsocketService)
+                              MessageService, ServiceBusMessageService, MockProcessingService,
+                              WebsocketService, LocalWebsocketService, AzureWebsocketService)
 
 
 async def app_init(app: FastAPI, sp: ServiceProvider):
@@ -30,14 +31,14 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
 
     settings: AppSettings = sp.get_service(AppSettings)
 
-    azure_cret = ClientSecretCredential(
+    azure_cred = ClientSecretCredential(
         tenant_id=settings.auth_tenant_id,
         client_id=settings.auth_client_id,
         client_secret=settings.auth_client_secret)
 
-    cosmos_client = CosmosClient(url=settings.db_url, credential=azure_cret)  # type: ignore
+    cosmos_client = CosmosClient(url=settings.db_url, credential=azure_cred)  # type: ignore
 
-    sp.register(ClientSecretCredential, azure_cret)
+    sp.register(ClientSecretCredential, azure_cred)
     sp.register(CosmosClient, cosmos_client)
 
     repository = CosmosDBOrderRepository(
@@ -47,7 +48,10 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     )
     sp.register(OrderRepository, repository)
 
-    websocket_service = LocalWebsocketService(app, settings)
+#    websocket_service = LocalWebsocketService(app, settings)
+#    sp.register(WebsocketService, websocket_service)
+
+    websocket_service = AzureWebsocketService(app, settings, azure_cred)
     sp.register(WebsocketService, websocket_service)
 
     #message_service = MockMessageService(sp)
@@ -61,16 +65,19 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
 
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
-    # mock_processor: MockProcessingService = sp.get_service(MockProcessingService)
-
-    # await mock_processor.close()
     await message_service.close()
 
-    azure_cret: ClientSecretCredential = sp.get_service(ClientSecretCredential)
+    websocket_service = sp.get_service(WebsocketService)
+    await websocket_service.close()
+
+#    websocket_service2 = sp.get_service(AzureWebsocketService)
+#    await websocket_service2.close()
+
+    azure_cred: ClientSecretCredential = sp.get_service(ClientSecretCredential)
     cosmos_client: CosmosClient = sp.get_service(CosmosClient)
 
     await cosmos_client.close()
-    await azure_cret.close()
+    await azure_cred.close()
 
 
 app = AppBuilder(ComponentsEnum.front_service) \

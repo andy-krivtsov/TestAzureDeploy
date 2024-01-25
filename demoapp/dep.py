@@ -9,6 +9,8 @@ from demoapp.app.sp import ServiceProvider
 from demoapp.services import (AppSettings, MSALOptionalScheme, OrderRepository, ProcessingRepository,
                               MessageService, WebsocketService)
 
+from demoapp.services.azure_websocket import AzureWebsocketService
+
 def get_global_service(req: HTTPConnection, T: Type) -> Any:
     sp: ServiceProvider = req.app.state.sp
     return sp.get_service(T)
@@ -39,3 +41,6 @@ def message_service(req: HTTPConnection) -> MessageService:
 
 def websocket_service(req: HTTPConnection) -> WebsocketService:
     return get_global_service(req, WebsocketService)
+
+def azure_websocket_service(req: HTTPConnection) -> AzureWebsocketService:
+    return get_global_service(req, AzureWebsocketService)

@@ -15,7 +15,8 @@ from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
 from demoapp.models import Customer, OrderStatus, ProcessingStatus, ProductItem, Order, PaginationOrdersList, OrderStatusUpdate, WebsocketConnectInfo
 from demoapp.app import AppAttributes
-from demoapp.services import AppSettings, OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException, MessageService, WebsocketService
+from demoapp.services import ( AppSettings, OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException,
+                               MessageService, WebsocketService, AzureWebsocketService )
 
 
 #===============================================================================

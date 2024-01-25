@@ -29,6 +29,9 @@ class AppSettings(BaseSettings):
 
     app_insights_constr: str = Field("", description="App Insights connection string")
 
+    web_pubsub_endpoint: str = Field("", description="Web PubSub service endpoint")
+    web_pubsub_hub: str = Field("", description="Web PubSub service Hub name")
+
     git_commit_sha: str = Field("", description="Git commit of this build")
 
     otel_service_name: str = Field("", description="Open Telemetry service name")

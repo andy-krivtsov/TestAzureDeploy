@@ -9,7 +9,9 @@ from demoapp.services.message_base import MessageServiceBase
 from demoapp.services.mock_message_service import MockMessageService, MockProcessingService, MockFrontService
 from demoapp.services.asb_message_service import ServiceBusMessageService
 from demoapp.services.interface.websocket import WebsocketService
-from demoapp.services.local_websocket_service import LocalWebsocketService
+from demoapp.services.local_websocket import LocalWebsocketService
+from demoapp.services.azure_websocket import AzureWebsocketService
+
 
 __all__ = [
     "AppSettings",
@@ -31,5 +33,6 @@ __all__ = [
     "MockFrontService",
     "ServiceBusMessageService",
     "WebsocketService",
-    "LocalWebsocketService"
+    "LocalWebsocketService",
+    "AzureWebsocketService"
 ]

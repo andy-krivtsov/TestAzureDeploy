@@ -142,6 +142,7 @@ class WebsocketConnectInfo(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     url: AnyUrl = Field(..., description="Connection URL for websocket notification connection")
+    protocol: str =  Field("", description="WebSocket subprotocol")
 
 class ProcessingItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)

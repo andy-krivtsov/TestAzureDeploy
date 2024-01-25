@@ -50,8 +50,8 @@ async function getWebsocketInfo() {
     return await apiGet("/api/websocketinfo")
 }
 
-function webSocketConnect(url, data_updater){
-    const notify_websocket = new WebSocket(url)
+function webSocketConnect(url, protocol, data_updater){
+    const notify_websocket = new WebSocket(url, protocol)
 
     notify_websocket.onopen = (event) => {
         console.log(`Connection opened: ${url}`);
@@ -65,10 +65,28 @@ function webSocketConnect(url, data_updater){
 
     notify_websocket.onmessage = (event) => {
         console.log(`Message received (${url})`);
-        let new_data = JSON.parse(event.data)
+
+        let new_data = convertMessage(JSON.parse(event.data), protocol)
+        if (!new_data) {
+            return
+        }
+
         console.log(new_data)
         if (data_updater) {
             data_updater(new_data)
         }
     }
+  }
+
+  function convertMessage(message, protocol) {
+    if (protocol != "json.webpubsub.azure.v1") {
+        return message
+    }
+
+    console.log(`Received Web PubSub message. type: ${message.type}`)
+    if (message.type == "message" && message.from == "server" && message.dataType == "json") {
+        return message.data
+    }
+
+    return []
   }

@@ -13,7 +13,7 @@
       const info = await getWebsocketInfo()
       console.log(`WebSocket URL: ${info.url}`)
 
-      setTimeout(webSocketConnect, 0, info.url, (msg) => {
+      setTimeout(webSocketConnect, 0, info.url, info.protocol, (msg) => {
         updateActiveOrdersTable(msg)
       })
     }

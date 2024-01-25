@@ -11,7 +11,7 @@ class WebsocketService(ABC):
         self._settings = settings
 
     @abstractmethod
-    async def get_client_connection_info(self, client_id: str) -> WebsocketConnectInfo:
+    async def get_client_connection_info(self, user_id: str) -> WebsocketConnectInfo:
         pass
 
     @abstractmethod
@@ -22,4 +22,6 @@ class WebsocketService(ABC):
     async def send_client_processing_update(self, items: list[ProcessingItem]):
         pass
 
-
+    @abstractmethod
+    async def close(self):
+        pass

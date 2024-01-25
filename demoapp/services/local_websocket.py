@@ -43,7 +43,7 @@ class LocalWebsocketService(WebsocketService):
         super().__init__(app, settings)
         app.include_router(router)
 
-    async def get_client_connection_info(self, client_id: str) -> WebsocketConnectInfo:
+    async def get_client_connection_info(self, user_id: str) -> WebsocketConnectInfo:
         pub_url = AnyUrl(self._settings.auth_public_url)
 
         ws_scheme = "wss" if pub_url.scheme == "https" else "ws"
@@ -70,3 +70,7 @@ class LocalWebsocketService(WebsocketService):
                 await con.send_json(jsonable_encoder(data))
             except Exception:
                 logging.exception("Error with connection!")
+
+    async def close(self):
+        for id, con in ws_connections.items():
+            await con.close()
