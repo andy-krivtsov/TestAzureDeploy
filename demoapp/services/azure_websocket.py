@@ -32,6 +32,7 @@ async def options_events(
 
     response.headers["Allow "] = "OPTIONS, POST"
     response.headers["WebHook-Allowed-Origin"] = "*"
+    response.headers["WebHook-Allowed-Rate"] = "100"
 
     return {}
 
