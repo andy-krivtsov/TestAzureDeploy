@@ -15,7 +15,7 @@ from http import HTTPStatus
 from demoapp.app.sp import ServiceProvider
 from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
-from demoapp.models import Customer, Order, ProcessingItem, ProcessingStatus, ProductItem, WebsocketConnectInfo
+from demoapp.models import Customer, Order, ProcessingItem, ProcessingStatus, ProductItem, WebsocketConnectInfo, FrontendSettings
 from demoapp.services import AppSettings, ProcessingRepository, WebsocketService, OrderProcessor
 
 
@@ -75,6 +75,15 @@ async def get_page(
     except TemplateNotFound:
         raise HTTPException(status_code=404, detail="Not found")
 
+@router.get("/api/settings")
+async def get_settings(
+        request: Request,
+        settings: AppSettings = Depends(dep.app_settings)) -> FrontendSettings:
+
+    return FrontendSettings(
+        login_url="",
+        logout_url=""
+    )
 
 @router.get("/api/processing", response_model=Iterable[ProcessingItem])
 async def get_processing_items(
