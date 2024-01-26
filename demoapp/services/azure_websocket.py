@@ -19,11 +19,11 @@ from demoapp.services.settings import AppSettings
 
 router = APIRouter()
 
-@router.options("/notifications/events", status_code=204)
+@router.options("/notifications/events")
 async def options_events(
             request: Request,
             response: Response,
-            webhook_request_origin: Annotated[str | None, Header()] = None):
+            webhook_request_origin: Annotated[str | None, Header()] = None) -> dict[str,str]:
 
     logging.info("Web PubSub validation: WebHook-Request-Origin: %s", webhook_request_origin)
 
@@ -32,6 +32,8 @@ async def options_events(
 
     response.headers["Allow "] = "OPTIONS, POST"
     response.headers["WebHook-Allowed-Origin"] = "*"
+
+    return {}
 
 @router.post("/notifications/events")
 async def post_events(
