@@ -10,7 +10,8 @@ from fastapi.encoders import jsonable_encoder
 from cloudevents.http import from_http
 
 from azure.identity.aio import ClientSecretCredential
-from azure.messaging.webpubsubservice.aio import WebPubSubServiceClient      # type: ignore
+from azure.messaging.webpubsubservice.aio import WebPubSubServiceClient
+from fastapi.responses import PlainTextResponse      # type: ignore
 from pydantic import AnyUrl
 
 from demoapp.services.interface.websocket import WebsocketService
@@ -23,18 +24,22 @@ router = APIRouter()
 async def options_events(
             request: Request,
             response: Response,
-            webhook_request_origin: Annotated[str | None, Header()] = None) -> dict[str,str]:
+            webhook_request_origin: Annotated[str | None, Header()] = None):
 
     logging.info("Web PubSub validation: WebHook-Request-Origin: %s", webhook_request_origin)
 
     if not webhook_request_origin.endswith("webpubsub.azure.com") and not webhook_request_origin.endswith("webpubsub.azure.test"):
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=f"Incorrect WebHook-Request-Origin: {webhook_request_origin}")
 
-    response.headers["Allow "] = "OPTIONS, POST"
-    response.headers["WebHook-Allowed-Origin"] = "*"
-    response.headers["WebHook-Allowed-Rate"] = "100"
+    # response.headers["Allow "] = "OPTIONS, POST"
+    # response.headers["WebHook-Allowed-Origin"] = "*"
+    # response.headers["WebHook-Allowed-Rate"] = "100"
 
-    return {}
+    return Response(status_code=204, headers= {
+        "Allow": "OPTIONS, POST",
+        "WebHook-Allowed-Origin": "*",
+        "WebHook-Allowed-Rate": "100"
+    })
 
 @router.post("/notifications/events")
 async def post_events(
