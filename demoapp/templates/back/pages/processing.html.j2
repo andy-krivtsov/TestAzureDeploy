@@ -6,17 +6,14 @@
   import { datetimeFormat, nullFieldFormater, tableDateFormatter } from "/static/utils.js"
   import { updateProcessingTable, processingTimeFormat, updateRemainingTime, processingRowStyle } from "/static/processing.js"
 
-  window.addEventListener('load', async (event) => {
-    const connectionInfo = await getWebsocketInfo()
-    console.log(`WebSocket URL: ${connectionInfo.url}`)
+  const connectionInfo = await getWebsocketInfo()
+  console.log(`Init connection to WebSocket URL: ${connectionInfo.url}`)
 
-    setTimeout(webSocketConnect, 0, connectionInfo, (msg) => {
-      updateProcessingTable(msg)
-    })
+  setTimeout(webSocketConnect, 0, connectionInfo, (msg) => {
+    updateProcessingTable(msg)
+  })
 
-    setTimeout(updateRemainingTime, 100)
-  });
-
+  setTimeout(updateRemainingTime, 100)
 
   async function onDeleteItems(generateNew = false) {
     console.log("Clear processing items DB (server-side operation)")
