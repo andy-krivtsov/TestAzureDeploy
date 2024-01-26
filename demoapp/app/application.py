@@ -4,10 +4,11 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Awaitable, Callable
-
+from starlette.middleware.base import BaseHTTPMiddleware
 import fastapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi_msal import MSALAuthorization
@@ -20,6 +21,7 @@ from demoapp.app.telemetry import SpanEnrichingProcessor
 from demoapp.app.sp import ServiceProvider
 from demoapp.services import msal_auth_config, AppSettings
 from demoapp.dep import app_settings
+from demoapp.app.logging_middleware import log_options_requests
 
 
 LIVENESS_PROBE_PATH = "/health/live"
@@ -51,6 +53,7 @@ class AppBuilder:
         self._static: list[AppBuilder.StaticMount] = []
         self._healthprobes = True
         self._appinsights = True
+        self._req_logger = False
 
     def with_settings(self, settings: AppSettings) -> AppBuilder:
         self._settings = settings
@@ -88,6 +91,10 @@ class AppBuilder:
         self._appinsights = val
         return self
 
+    def with_req_logger(self, val: bool=True) -> AppBuilder:
+        self._req_logger = val
+        return self
+
     def build(self) -> fastapi.FastAPI:
         sp = ServiceProvider()
 
@@ -106,6 +113,9 @@ class AppBuilder:
 
         app = fastapi.FastAPI(lifespan=self.app_lifespan)
         app.state.sp = sp
+
+        if self._req_logger:
+            app.add_middleware(BaseHTTPMiddleware, dispatch=log_options_requests)
 
         for mount in self._static:
             app.mount(path=mount.path, app=StaticFiles(directory=mount.file_path), name=mount.name)

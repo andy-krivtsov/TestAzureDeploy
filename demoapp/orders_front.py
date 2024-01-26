@@ -79,6 +79,7 @@ app = AppBuilder() \
         .with_healthprobes() \
         .with_init(app_init) \
         .with_shutdown(app_shutdown) \
+        .with_req_logger() \
         .build()
 
 app.include_router(router)
