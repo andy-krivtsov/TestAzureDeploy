@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import TemplateNotFound
+from pydantic import AnyUrl
 from fastapi_msal.models import UserInfo
 from opentelemetry import baggage, trace, context
 from http import HTTPStatus
@@ -13,7 +14,7 @@ from http import HTTPStatus
 from demoapp.app.sp import ServiceProvider
 from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
-from demoapp.models import Customer, OrderStatus, ProcessingStatus, ProductItem, Order, PaginationOrdersList, OrderStatusUpdate, WebsocketConnectInfo
+from demoapp.models import Customer, FrontendSettings, OrderStatus, ProcessingStatus, ProductItem, Order, PaginationOrdersList, OrderStatusUpdate, WebsocketConnectInfo
 from demoapp.app import AppAttributes
 from demoapp.services import ( AppSettings, OrderRepository, RepositoryAlreadyExistException, RepositoryNotFoundException,
                                MessageService, WebsocketService, AzureWebsocketService )
@@ -99,6 +100,21 @@ async def get_page(
 
     except TemplateNotFound:
         raise HTTPException(status_code=404, detail="Not found")
+
+@router.get("/api/settings")
+async def get_settings(
+        request: Request,
+        settings: AppSettings = Depends(dep.app_settings),
+        current_user: UserInfo = Depends(dep.optional_auth_scheme)) -> FrontendSettings:
+
+    login_path = settings.auth_login_path
+    if settings.auth_public_url:
+        login_path = f"{settings.auth_login_path}?redirect_uri={settings.auth_public_url}{settings.auth_token_path}"
+
+    return FrontendSettings(
+        login_url=login_path,
+        logout_url=settings.auth_logout_path
+    )
 
 @router.get("/api/userinfo")
 async def get_userinfo(

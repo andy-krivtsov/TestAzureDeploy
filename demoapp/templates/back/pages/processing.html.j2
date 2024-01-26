@@ -7,10 +7,10 @@
   import { updateProcessingTable, processingTimeFormat, updateRemainingTime, processingRowStyle } from "/static/processing.js"
 
   window.addEventListener('load', async (event) => {
-    const info = await getWebsocketInfo()
-    console.log(`WebSocket URL: ${info.url}`)
+    const connectionInfo = await getWebsocketInfo()
+    console.log(`WebSocket URL: ${connectionInfo.url}`)
 
-    setTimeout(webSocketConnect, 0, info.url, (msg) => {
+    setTimeout(webSocketConnect, 0, connectionInfo, (msg) => {
       updateProcessingTable(msg)
     })
 
@@ -69,6 +69,7 @@
           <tr>
             <th scope="col" data-field="id" data-cell-style="processingRowStyle" data-sortable="true">ID</th>
             <th scope="col" data-field="created" data-cell-style="processingRowStyle" data-formatter="tableDateFormatter" data-sortable="true" data-align="center">Created</th>
+            <th scope="col" data-field="started" data-cell-style="processingRowStyle" data-formatter="tableDateFormatter" data-align="center">Started</th>
             <th scope="col" data-field="order.id" data-cell-style="processingRowStyle" data-sortable="true">Order ID</th>
             <th scope="col" data-field="order.customer.name" data-cell-style="processingRowStyle" data-sortable="true">Customer</th>
             <th scope="col" data-field="processingTime" data-cell-style="processingRowStyle" data-align="center" data-formatter="processingTimeFormat" data-sortable="true">Time</th>

@@ -16,7 +16,6 @@ from fastapi.templating import Jinja2Templates
 
 from demoapp.app.sp import ServiceProvider
 from demoapp.app import AppBuilder
-from demoapp.models import ComponentsEnum
 from demoapp.controllers.orders_front import router, on_status_message
 from demoapp.services import (AppSettings, OrderRepository, CosmosDBOrderRepository,
                               MessageService, ServiceBusMessageService, MockProcessingService,
@@ -54,13 +53,9 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     websocket_service = AzureWebsocketService(app, settings, azure_cred)
     sp.register(WebsocketService, websocket_service)
 
-    #message_service = MockMessageService(sp)
     message_service = ServiceBusMessageService(sp)
     message_service.subscribe_status_messages(on_status_message)
     sp.register(MessageService, message_service)
-
-    # mock_processor = MockProcessingService(message_service)
-    # sp.register(MockProcessingService, mock_processor)
 
 
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
@@ -70,9 +65,6 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     websocket_service = sp.get_service(WebsocketService)
     await websocket_service.close()
 
-#    websocket_service2 = sp.get_service(AzureWebsocketService)
-#    await websocket_service2.close()
-
     azure_cred: ClientSecretCredential = sp.get_service(ClientSecretCredential)
     cosmos_client: CosmosClient = sp.get_service(CosmosClient)
 
@@ -80,7 +72,7 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     await azure_cred.close()
 
 
-app = AppBuilder(ComponentsEnum.front_service) \
+app = AppBuilder() \
         .with_static() \
         .with_user_auth() \
         .with_appinsights() \

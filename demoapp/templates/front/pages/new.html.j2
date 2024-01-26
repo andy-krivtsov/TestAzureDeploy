@@ -6,18 +6,16 @@
   import { datetimeFormat } from "/static/utils.js"
   import { getWebsocketInfo, webSocketConnect } from "/static/orders-api.js"
 
-  window.addEventListener('load', async (event) => {
-    await setupNewOrderForm();
+  await setupNewOrderForm();
 
-    if (window.userInfo) {
-      const info = await getWebsocketInfo()
-      console.log(`WebSocket URL: ${info.url}`)
+  if (window.userInfo) {
+    const connectionInfo = await getWebsocketInfo()
+    console.log(`Init connection to WebSocket URL: ${connectionInfo.url}`)
 
-      setTimeout(webSocketConnect, 0, info.url, info.protocol, (msg) => {
-        updateActiveOrdersTable(msg)
-      })
-    }
-  });
+    setTimeout(webSocketConnect, 0, connectionInfo, (msg) => {
+      updateActiveOrdersTable(msg)
+    })
+  }
 
   function tableDateFormatter(value) {
     return datetimeFormat(new Date(value))
@@ -125,8 +123,8 @@
         </div>
 
         <div class="d-flex">
-          <button type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto" onclick="onGenerateRandomOrder()">Generate</button>
-          <button type="button" class="btn btn-primary mt-2 px-5 py-2" onclick="onNewOrder()">New Order</button>
+          <button id="generateButton" type="button" class="btn btn-outline-secondary mt-2 px-5 py-2 me-auto" disabled onclick="onGenerateRandomOrder()">Generate</button>
+          <button id="newOrderButton" type="button" class="btn btn-primary mt-2 px-5 py-2" disabled onclick="onNewOrder()">New Order</button>
         </div>
       </form>
     </div>

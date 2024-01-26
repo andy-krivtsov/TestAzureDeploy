@@ -34,8 +34,10 @@ async function updateRemainingTime() {
     data.filter(item => item.status == "Processing").forEach(item => {
         let update = false
 
+        if (!item.started) { return }
+
         if (!item.expected_finish_time) {
-            let d = new Date(item.created)
+            let d = new Date(item.started)
             d.setSeconds(d.getSeconds() + item.processingTime)
             item.expected_finish_time = d.valueOf()
             update = true
@@ -64,5 +66,9 @@ function processingRowStyle(value, item) {
     if (item.status == "Processing") {
         ret.classes = "bg-warning text-dark"
     }
+    if (item.status == "Recovery") {
+        ret.classes = "bg-danger text-white"
+    }
+
     return ret
 }

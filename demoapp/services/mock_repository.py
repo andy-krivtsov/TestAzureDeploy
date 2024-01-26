@@ -79,7 +79,7 @@ class MemoryOrderRepository(OrderRepository):
             return True
 
         # if filtered created < 1h age or status != completed
-        return ((order.status in [OrderStatus.new, OrderStatus.created] ) or
+        return ((order.status == OrderStatus.new) or
                 (order.created > datetime.now(timezone.utc) - timedelta(minutes=15)))
 
 
@@ -117,9 +117,9 @@ class MemoryProcessingRepository(ProcessingRepository):
             raise RepositoryNotFoundException(f"Item not found: id={id}")
         return item
 
-    async def get_items(self, status: ProcessingStatus = None) -> Iterable[ProcessingItem]:
+    async def get_items(self, status: ProcessingStatus = None, time_period: timedelta=None) -> Iterable[ProcessingItem]:
         return sorted(
-            filter(lambda x: self.filterItems(x, status), self._items.values()),
+            filter(lambda x: self.filterItems(x, status, time_period), self._items.values()),
             key=lambda x: x.created,
             reverse=True
         )
@@ -144,9 +144,10 @@ class MemoryProcessingRepository(ProcessingRepository):
     async def close(self):
         pass
 
-    def filterItems(self, item: ProcessingItem, status: ProcessingStatus = None):
-        if item.created < datetime.now(timezone.utc) - timedelta(minutes=15):
-            return False
+    def filterItems(self, item: ProcessingItem, status: ProcessingStatus = None, time_period: timedelta=None):
+        if time_period:
+            if item.created < datetime.now(timezone.utc) - time_period:
+                return False
 
         if status is not None:
             return item.status == status

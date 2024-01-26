@@ -17,10 +17,10 @@ from fastapi.templating import Jinja2Templates
 
 from demoapp.app.sp import ServiceProvider
 from demoapp.app import AppBuilder
-from demoapp.models import ComponentsEnum
 from demoapp.controllers.orders_back import router, on_processing_message
 from demoapp.services import (AppSettings, ProcessingRepository, CosmosDBProcessingRepository,
-                              MessageService, MockFrontService, ServiceBusMessageService, WebsocketService, LocalWebsocketService)
+                              MessageService, MockFrontService, ServiceBusMessageService, WebsocketService, LocalWebsocketService,
+                              OrderProcessingRecovery)
 
 processing_task: asyncio.Task = None
 
@@ -58,6 +58,9 @@ async def app_init(app: FastAPI, sp: ServiceProvider):
     message_service.subscribe_processing_messages(on_processing_message)
     sp.register(MessageService, message_service)
 
+    recovery_service = OrderProcessingRecovery(sp)
+    asyncio.create_task(recovery_service.mark_recovery_items())
+
 async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     message_service: MessageService = sp.get_service(MessageService)
     await message_service.close()
@@ -68,7 +71,7 @@ async def app_shutdown(app: FastAPI, sp: ServiceProvider):
     await cosmos_client.close()
     await azure_cret.close()
 
-app = AppBuilder(ComponentsEnum.back_service) \
+app = AppBuilder() \
         .with_static() \
         .with_appinsights() \
         .with_healthprobes() \

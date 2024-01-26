@@ -124,6 +124,8 @@ async function setupNewOrderForm() {
     newOrderFormModel.dueDate = d
 
     loadOrderForm()
+
+    enableOrderFormButtons(true)
 }
 
 function validateOrder(order) {
@@ -139,22 +141,40 @@ function validateOrder(order) {
             errs.push("Item is null")
     })
 
-    if (errs.length)
-        throw { "message": "Order validation error!", "errors": errs }
+    return errs
+}
+
+function enableOrderFormButtons(state) {
+    let bts = ["generateButton","newOrderButton"]
+
+    bts.forEach(x => {
+        document.getElementById(x).disabled = !state
+    })
 }
 
 async function onNewOrder() {
-    saveOrderModel()
-    console.log(`New order: ${JSON.stringify(newOrderFormModel)}`)
+    try {
+        enableOrderFormButtons(false)
 
-    validateOrder(newOrderFormModel)
-    await createNewOrder(newOrderFormModel)
+        saveOrderModel()
+        console.log(`New order: ${JSON.stringify(newOrderFormModel)}`)
 
-    //$(`#currentOrders`).bootstrapTable('refresh')
+        let errs = validateOrder(newOrderFormModel)
 
-    newOrderFormModel.id = ""
-    loadOrderForm()
+        if (errs.length == 0) {
+            await createNewOrder(newOrderFormModel)
+
+            newOrderFormModel.id = ""
+            loadOrderForm()
+        } else {
+            console.log(`Validation errors: ${errs}`)
+        }
+    } finally {
+        enableOrderFormButtons(true)
+    }
 }
+
+
 
 function onGenerateRandomOrder() {
     newOrderFormModel = getRandomOrderModel()

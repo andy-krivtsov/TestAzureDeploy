@@ -45,27 +45,32 @@ class CosmosDBProcessingRepository(ProcessingRepository):
 
         return ProcessingItem.model_validate(items[0])
 
-    def build_get_query(self, status: ProcessingStatus) -> tuple[str, list]:
+    def build_get_query(self, status: ProcessingStatus, time_period: timedelta=None) -> tuple[str, list]:
         query = [ f'SELECT * FROM {self._container_name} c' ]
+        where: list[str] = []
+        params: list[dict] = []
 
-        limit_date = datetime.now(timezone.utc) - timedelta(minutes=15)
-        limit_timestamp = int(round(limit_date.timestamp() * 1000))
+        if time_period:
+            limit_date = datetime.now(timezone.utc) - time_period
+            limit_timestamp = int(round(limit_date.timestamp() * 1000))
 
-        where = [ "DateTimeToTimestamp(c.created) > @timestamp" ]
-        params = [{ "name": "@timestamp", "value": limit_timestamp }]
+            where.append("DateTimeToTimestamp(c.created) > @timestamp")
+            params.append({ "name": "@timestamp", "value": limit_timestamp })
 
         if status is not None:
             where.append("c.status = @status")
-            params.append({ "name": "@status", "value": str(status) })
+            params.append({ "name": "@status", "value": status.value })
 
-        query.append("WHERE " + "AND".join(where))
+        if where:
+            query.append("WHERE " + "AND".join(where))
+
         query.append("ORDER BY c.created DESC")
 
         return " ".join(query), params
 
     @convert_cosmosdb_exceptions
-    async def get_items(self, status: ProcessingStatus = None) -> Iterable[ProcessingItem]:
-        query, params = self.build_get_query(status)
+    async def get_items(self, status: ProcessingStatus = None, time_period: timedelta = None) -> Iterable[ProcessingItem]:
+        query, params = self.build_get_query(status, time_period)
         logging.info("Get processing items: query: %s",  query)
 
         items = self._container.query_items(query=query, parameters=params)

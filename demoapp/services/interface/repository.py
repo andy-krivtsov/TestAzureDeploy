@@ -1,4 +1,5 @@
 from abc import ABC,abstractmethod
+from datetime import timedelta
 from typing import Iterable
 from demoapp.models import Order, ProcessingItem, ProcessingStatus
 
@@ -51,7 +52,7 @@ class ProcessingRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_items(self, status: ProcessingStatus = None) -> Iterable[ProcessingItem]:
+    async def get_items(self, status: ProcessingStatus=None, time_period: timedelta=None) -> Iterable[ProcessingItem]:
         pass
 
     @abstractmethod

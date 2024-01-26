@@ -31,6 +31,9 @@ def setup_logging(settings: AppSettings) -> None:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    # asb_logger = logging.getLogger('azure.servicebus')
+    # asb_logger.setLevel(logging.DEBUG)
+
     # Uvicorn loggers
     uvicorn_root = logging.getLogger("uvicorn")
     uvicorn_root.handlers[0].setFormatter(color_formatter)

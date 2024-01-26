@@ -18,7 +18,6 @@ from opentelemetry.trace import get_tracer_provider
 from demoapp.app.logging import setup_logging
 from demoapp.app.telemetry import SpanEnrichingProcessor
 from demoapp.app.sp import ServiceProvider
-from demoapp.models import ComponentsEnum
 from demoapp.services import msal_auth_config, AppSettings
 from demoapp.dep import app_settings
 
@@ -41,12 +40,11 @@ class AppBuilder:
         file_path: Path
         name: str
 
-    def __init__(self, component: ComponentsEnum):
+    def __init__(self):
         self._settings: AppSettings = None
         self._app_init: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable] = None
         self._app_shutdown: Callable[[fastapi.FastAPI, ServiceProvider], Awaitable] = None
 
-        self._component = component
         self._cors = True
         self._msal = True
         self._user_auth = False
@@ -107,7 +105,6 @@ class AppBuilder:
             get_tracer_provider().add_span_processor(SpanEnrichingProcessor())   # type: ignore
 
         app = fastapi.FastAPI(lifespan=self.app_lifespan)
-        app.state.component = self._component
         app.state.sp = sp
 
         for mount in self._static:

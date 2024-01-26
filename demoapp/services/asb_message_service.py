@@ -23,7 +23,7 @@ class ServiceBusMessageService(MessageServiceBase):
         settings: AppSettings = sp.get_service(AppSettings)
         credential: ClientSecretCredential = sp.get_service(ClientSecretCredential)
 
-        self._client = ServiceBusClient(settings.servicebus_namespace, credential)
+        self._client = ServiceBusClient(settings.servicebus_namespace, credential, logging_enable=False)
 
         # Order messages: send & receive
         self._order_sender = self._client.get_topic_sender(

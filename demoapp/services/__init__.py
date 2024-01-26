@@ -11,7 +11,7 @@ from demoapp.services.asb_message_service import ServiceBusMessageService
 from demoapp.services.interface.websocket import WebsocketService
 from demoapp.services.local_websocket import LocalWebsocketService
 from demoapp.services.azure_websocket import AzureWebsocketService
-
+from demoapp.services.order_processing import OrderProcessor, OrderProcessingRecovery
 
 __all__ = [
     "AppSettings",
@@ -34,5 +34,7 @@ __all__ = [
     "ServiceBusMessageService",
     "WebsocketService",
     "LocalWebsocketService",
-    "AzureWebsocketService"
+    "AzureWebsocketService",
+    "OrderProcessor",
+    "OrderProcessingRecovery"
 ]

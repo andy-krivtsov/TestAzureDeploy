@@ -1,4 +1,4 @@
-import { apiGet, apiPostItem, apiDelete, webSocketConnect, getWebsocketInfo } from "/static/api-base.js"
+import { apiGet, apiPostItem, apiDelete, webSocketConnect, getWebsocketInfo, HTTPError, appSettings } from "/static/api-base.js"
 
 export { getCustomers, getProductItems, createNewOrder, getUserInfo, getOrders, deleteOrders, generateTestOrders, getWebsocketInfo, webSocketConnect }
 
@@ -11,7 +11,16 @@ async function getProductItems() {
 }
 
 async function createNewOrder(order) {
-    return apiPostItem("/api/orders", order)
+    try {
+        return await apiPostItem("/api/orders", order)
+    } catch(err) {
+        if (err instanceof HTTPError) {
+            if (err.code == 401) {
+                console.log(`Redirect to login URL: ${appSettings.loginUrl}`)
+                window.location.href = appSettings.loginUrl
+            }
+        }
+    }
 }
 
 async function getOrders() {

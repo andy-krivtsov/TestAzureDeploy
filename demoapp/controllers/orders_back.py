@@ -2,7 +2,7 @@ import asyncio
 import logging
 import uuid
 import random
-from typing import Annotated, Iterable, Union, cast
+from typing import Iterable
 from datetime import datetime,timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -15,71 +15,29 @@ from http import HTTPStatus
 from demoapp.app.sp import ServiceProvider
 from demoapp import dep
 from demoapp.services.metrics import created_messages_counter, processed_messages_counter
-from demoapp.models import Customer, Order, ProcessingItem, OrderStatusUpdate, ProcessingStatus, ProductItem, WebsocketConnectInfo
-from demoapp.app import AppAttributes
-from demoapp.services import AppSettings, ProcessingRepository, MessageService, WebsocketService
+from demoapp.models import Customer, Order, ProcessingItem, ProcessingStatus, ProductItem, WebsocketConnectInfo
+from demoapp.services import AppSettings, ProcessingRepository, WebsocketService, OrderProcessor
 
 
 #===============================================================================
 # Callback functions
 #===============================================================================
 
-
-async def send_status_update(item: ProcessingItem, sp: ServiceProvider):
-    message_service: MessageService = sp.get_service(MessageService)
-    websocket_service: WebsocketService = sp.get_service(WebsocketService)
-
-    await message_service.send_status_message(OrderStatusUpdate(
-        order_id=item.order.id,
-        new_status=item.status
-    ))
-
-    await websocket_service.send_client_processing_update([ item ])
-
-
 async def on_processing_message(order: Order, sp: ServiceProvider):
-    errorFlag = True
     new_item = ProcessingItem(
         id=str(uuid.uuid4()),
         order=order,
         created=datetime.now(timezone.utc),
         processing_time=random.randint(10, 30),
-        status=ProcessingStatus.processing
+        status=ProcessingStatus.new
     )
 
-    try:
-        repository: ProcessingRepository = sp.get_service(ProcessingRepository)
-        logging.info("Start order processing, id: %s, time: %s seconds", order.id, new_item.processing_time)
+    logging.info("Start order processing, id: %s, time: %s seconds", order.id, new_item.processing_time)
 
-        await repository.create_item(new_item)
-        errorFlag = False
+    processor = OrderProcessor(new_item, sp)
+    await processor.create_item()
+    asyncio.create_task(processor.process())
 
-        asyncio.create_task(order_process(new_item, sp))
-    finally:
-        if errorFlag:
-            new_item.status = ProcessingStatus.error
-            await send_status_update(new_item, sp)
-
-async def order_process(item: ProcessingItem, sp: ServiceProvider):
-    try:
-        await send_status_update(item, sp)
-
-        await asyncio.sleep(item.processing_time)
-
-        repository: ProcessingRepository = sp.get_service(ProcessingRepository)
-
-        d = datetime.now(timezone.utc)
-        logging.info("Order processing is finished, id = %s, order = %s", item.id, item.order.id)
-
-        item.finished = d
-        item.status = ProcessingStatus.completed
-        await repository.update_item(item)
-
-        await send_status_update(item, sp)
-    except Exception as exc:
-        logging.exception("Error in processing order: %s", item.order.id)
-        item.status = ProcessingStatus.error
-        await send_status_update(item, sp)
 
 #===============================================================================
 # Routing (HTTP path functions)
@@ -125,7 +83,7 @@ async def get_processing_items(
             repository: ProcessingRepository = Depends(dep.processing_repository)
     ) -> Iterable[ProcessingItem]:
 
-    return await repository.get_items()
+    return await repository.get_items(time_period=timedelta(minutes=120))
 
 @router.delete("/api/processing")
 async def delete_processing_items(
@@ -175,8 +133,9 @@ def get_test_items(n: int = 100) -> list[ProcessingItem]:
             finished = None
 
         items.append(ProcessingItem(
-            id = id,
-            created = order.created + timedelta(seconds=5),
+            id=id,
+            created=order.created + timedelta(seconds=5),
+            started=order.created + timedelta(seconds=6),
             order=order,
             processing_time=random.randint(5, 180),
             finished=finished,
