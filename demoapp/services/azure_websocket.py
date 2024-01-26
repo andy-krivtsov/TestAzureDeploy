@@ -19,7 +19,7 @@ from demoapp.services.settings import AppSettings
 
 router = APIRouter()
 
-@router.options("/notifications/events")
+@router.options("/notifications/events", status_code=204)
 async def options_events(
             request: Request,
             response: Response,
@@ -30,8 +30,8 @@ async def options_events(
     if not webhook_request_origin.endswith("webpubsub.azure.com"):
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=f"Incorrect WebHook-Request-Origin: {webhook_request_origin}")
 
-    response.headers["Allow "] = "POST"
-    response.headers["WebHook-Allowed-Origin"] = webhook_request_origin
+    response.headers["Allow "] = "OPTIONS, POST"
+    response.headers["WebHook-Allowed-Origin"] = "*"
 
 @router.post("/notifications/events")
 async def post_events(
