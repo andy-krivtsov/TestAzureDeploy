@@ -27,7 +27,7 @@ async def options_events(
 
     logging.info("Web PubSub validation: WebHook-Request-Origin: %s", webhook_request_origin)
 
-    if not webhook_request_origin.endswith("webpubsub.azure.com"):
+    if not webhook_request_origin.endswith("webpubsub.azure.com") and not webhook_request_origin.endswith("webpubsub.azure.test"):
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=f"Incorrect WebHook-Request-Origin: {webhook_request_origin}")
 
     response.headers["Allow "] = "OPTIONS, POST"
