@@ -5,6 +5,8 @@ resource "azurerm_container_app" "conapp" {
   resource_group_name          = var.con_app_env_rg
   revision_mode                = "Single"
 
+  depends_on = [ time_sleep.wait_dns ]
+
   identity {
     type = "UserAssigned"
     identity_ids = [

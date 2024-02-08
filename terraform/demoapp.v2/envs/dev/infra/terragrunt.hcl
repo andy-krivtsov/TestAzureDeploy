@@ -19,15 +19,29 @@ dependency "aad" {
   mock_outputs_allowed_terraform_commands = ["validate"]
 }
 
+# Load common locals variables
+include "env" {
+  path           = find_in_parent_folders("env-vars.hcl")
+  expose         = true
+  merge_strategy = "no_merge"
+}
+
+locals {
+  cmn = include.env.locals
+}
+
 inputs = {
-  name_prefix              = "demoapp"
-  resource_group           = "AzureLearnDev"
-  acr_registry             = "akazureregistry"
-  acr_registry_rg          = "AzureLearn"
-  cert_keyvault            = "ak-certs-vault"
-  cert_keyvault_rg         = "ssl-certs"
-  cert_keyvault_key        = "wildcard-az-mechlab-net"
-  pubsub_handlers          = { "front" = "tunnel:///notifications/events" }
+  name_prefix              = local.cmn.name_prefix
+  resource_group           = local.cmn.resource_group
+  acr_registry             = local.cmn.acr_registry
+  acr_registry_rg          = local.cmn.shared_resource_group
+  cert_keyvault            = local.cmn.cert_keyvault
+  cert_keyvault_rg         = local.cmn.cert_keyvault_rg
+  cert_keyvault_key        = local.cmn.cert_keyvault_key
+  pubsub_handlers          = {
+    "front"       = "${local.cmn.front_service_url}${local.cmn.pubsub_handler_path}"
+    "front_local" = "tunnel://${local.cmn.pubsub_handler_path}"
+  }
   app_client_id            = dependency.aad.outputs.client_id
   app_client_secret        = dependency.aad.outputs.client_secret
   app_service_principal_id = dependency.aad.outputs.service_principal_id

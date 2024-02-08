@@ -53,7 +53,7 @@ output "current_user" {
 output "keyvault" {
   value = {
     name       = azurerm_key_vault.secrets_vault.name
-    key_prefix = "${var.name_prefix}-auth-"
+    key_prefix = "${var.name_prefix}-"
   }
 }
 

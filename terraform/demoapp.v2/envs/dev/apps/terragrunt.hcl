@@ -30,30 +30,34 @@ dependency "infra" {
   mock_outputs_allowed_terraform_commands = ["validate"]
 }
 
+# Load common locals variables
+include "env" {
+  path           = find_in_parent_folders("env-vars.hcl")
+  expose         = true
+  merge_strategy = "no_merge"
+}
+
 locals {
-  hostname_suffix       = "-dev"
-  custom_domain         = "az.mechlab.net"
-  registry_group        = "AzureLearnDev"
-  shared_registry_group = "AzureLearn"
-  acr_registry          = "akazureregistry"
+  cmn     = include.env.locals
+  deploy  = jsondecode(file(find_in_parent_folders("deploy-vars.json")))
 }
 
 inputs = {
+  app_tag               = local.deploy.app_tag
   con_app_env           = dependency.infra.outputs.conapp_env.name
-  con_app_env_rg        = local.registry_group
+  con_app_env_rg        = local.cmn.resource_group
   con_app_env_cert      = dependency.infra.outputs.conapp_env.cert
   con_app_user_identity = dependency.infra.outputs.conapp_identity.name
-  hostname_suffix       = local.hostname_suffix
-  custom_domain         = local.custom_domain
-  custom_dns_zone_rg    = local.shared_registry_group
-  revision_suffix       = "xx01234"
-  app_image             = "learn/demoapp"
-  app_tag               = "dev"
-  acr_registry          = local.acr_registry
-  acr_registry_rg       = local.shared_registry_group
+  hostname_suffix       = local.cmn.hostname_suffix
+  custom_domain         = local.cmn.custom_domain
+  custom_dns_zone_rg    = local.cmn.shared_resource_group
+  revision_suffix       = local.cmn.revision_suffix
+  app_image             = local.cmn.app_image
+  acr_registry          = local.cmn.acr_registry
+  acr_registry_rg       = local.cmn.shared_resource_group
   keyvault_prefix       = dependency.infra.outputs.keyvault.key_prefix
   keyvault              = dependency.infra.outputs.keyvault.name
-  keyvault_rg           = local.registry_group
+  keyvault_rg           = local.cmn.resource_group
 
   app_global_env        = {
     SERVICEBUS_NAMESPACE                 = dependency.infra.outputs.servicebus.hostname
@@ -71,6 +75,7 @@ inputs = {
     OTEL_PYTHON_EXCLUDED_URLS            = "/health/*"
   }
 
+  # Can be overrited in CLI with -var 'app_list={}' parameter to deploy without applications themselves
   app_list              = {
     "front" = {
       args = ["--host", "0.0.0.0", "demoapp.orders_front:app"]
@@ -79,7 +84,7 @@ inputs = {
         SERVICEBUS_STATUS_SUB = dependency.infra.outputs.servicebus.sub.front_status
         SERVICEBUS_ORDERS_SUB = ""
         DB_CONTAINER          = dependency.infra.outputs.cosmosdb.containers.orders
-        AUTH_PUBLIC_URL       = "https://front${local.hostname_suffix}.${local.custom_domain}"
+        AUTH_PUBLIC_URL       = local.cmn.front_service_url
         WEB_PUBSUB_HUB        = dependency.infra.outputs.web_pubsub.front_hub
       }
     }
@@ -91,7 +96,7 @@ inputs = {
         SERVICEBUS_STATUS_SUB = ""
         SERVICEBUS_ORDERS_SUB = dependency.infra.outputs.servicebus.sub.back_orders
         DB_CONTAINER          = dependency.infra.outputs.cosmosdb.containers.processing
-        AUTH_PUBLIC_URL       = "https://back${local.hostname_suffix}.${local.custom_domain}"
+        AUTH_PUBLIC_URL       = local.cmn.back_service_url
       }
     }
   }

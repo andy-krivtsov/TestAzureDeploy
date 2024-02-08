@@ -5,11 +5,11 @@ data "azurerm_container_app_environment" "app_env" {
 
 data "azurerm_container_app_environment_certificate" "app_env_cert" {
   name                         = var.con_app_env_cert
-  container_app_environment_id = data.azurerm_container_app_environment.appenv.id
+  container_app_environment_id = data.azurerm_container_app_environment.app_env.id
 }
 
 data "azapi_resource" "conapp_env_api" {
-  resource_id = azurerm_container_app_environment.conapp_env.id
+  resource_id = data.azurerm_container_app_environment.app_env.id
   type        = "Microsoft.App/managedEnvironments@2022-11-01-preview"
 
   response_export_values = ["properties.customDomainConfiguration.customDomainVerificationId"]
@@ -17,7 +17,7 @@ data "azapi_resource" "conapp_env_api" {
 
 data "azurerm_user_assigned_identity" "con_app" {
   name                = var.con_app_user_identity
-  resource_group_name = con_app_env_rg
+  resource_group_name = var.con_app_env_rg
 }
 
 data "azurerm_container_registry" "app_registry" {

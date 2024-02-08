@@ -15,6 +15,10 @@ variable "con_app_user_identity_id" {
   type = string
 }
 
+variable "con_app_ip_address" {
+  type = string
+}
+
 variable "secrets" {
   type = map(string)
 }
@@ -29,6 +33,14 @@ variable "app_hostname" {
 }
 
 variable "custom_domain" {
+  type = string
+}
+
+variable "custom_dns_zone_rg" {
+  type = string
+}
+
+variable "domain_verification_id" {
   type = string
 }
 
