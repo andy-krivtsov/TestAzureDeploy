@@ -19,6 +19,7 @@ variables:
   tag: dev
 
   armServiceConnection: AzureServiceConnection
+  armSubscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
 
   skipBuild: true
 
@@ -114,7 +115,12 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
+              addSpnToEnvironment: true
               inlineScript:
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_CLIENT_SECRET="$servicePrincipalKey"
+                export ARM_TENANT_ID="$tenantId"
+                export ARM_SUBSCRIPTION_ID="${{ variables.armSubscriptionId }}"
                 /home/linuxbrew/.linuxbrew/bin/terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
