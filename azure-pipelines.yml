@@ -82,7 +82,9 @@ stages:
             displayName: Install Terragrunt
             inputs:
               targetType: inline
-              script: /home/linuxbrew/.linuxbrew/bin/brew install terragrunt
+              script: |
+                eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+                brew install terragrunt
 
           # Test terraform CLI
           - task: TerraformCLI@0
