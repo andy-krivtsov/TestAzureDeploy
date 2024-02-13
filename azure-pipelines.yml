@@ -2,8 +2,8 @@ trigger:
   batch: true
   branches:
     include:
-    - main
     - dev
+    - terragrunt
   tags:
     include:
     - '*'
@@ -13,23 +13,14 @@ variables:
   location: westeurope
   environmentName: Python-Container-App-Dev
 
-  dockerRegistryName: akazureregistry
   registryServiceConnection: akazureregistry
   imageNamespace: learn
   imageName: demoapp
   tag: dev
 
   armServiceConnection: AzureServiceConnection
-  subscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
 
-  namePrefix: demoapp
-  resourceGroup: AzureLearn
-
-  tfstateStorageAccount: aktfstate
-  tfstateStorageContainer: tfstate
-  tfstateStorageKey: container-demoapp.tfstate
-
-  skipBuild: false
+  skipBuild: true
 
 pool:
   vmImage: $(vmImageName)
@@ -82,9 +73,14 @@ stages:
           # Checkout to Build.SourcesDirectory
           - checkout: self
 
-          # Install terraform latest
+          # Install terraform
           - task: TerraformInstaller@1
-            displayName: Install terraform
+            displayName: Install Terraform
+
+          # Install terragrunt
+          - task: Bash@3
+            displayName: Install Terragrunt
+            script: brew install terragrunt
 
           # Test terraform CLI
           - task: TerraformCLI@0
@@ -92,77 +88,62 @@ stages:
             inputs:
               command: version
 
-          # Generate terraform variables .auto.tfvars.json file
+          # Generate teragrunt deployment variables
           - task: PowerShell@2
-            displayName:  Generate parameters file for deployment
+            displayName:  Generate deployment variables file
             inputs:
               targetType: inline
               pwsh: true
-              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
               script: |
                 $json_str  = @{
-                  namePrefix = '${{ variables.namePrefix }}'
-                  resourceGroupName = '${{ variables.resourceGroup }}'
-                  registry = '${{ variables.dockerRegistryName }}'
-                  containerImage = '${{ variables.imageNamespace }}/${{ variables.imageName }}'
-                  containerTag = '${{ variables.tag }}'
-                  revisionSuffix = "$(Build.BuildId)-" + "$(Build.SourceVersion)".substring(0,8)
-                  gitCommitSHA = "$(Build.SourceVersion)"
+                  app_tag = '${{ variables.tag }}'
                 } | ConvertTo-Json
                 $json_str | Write-Output
-                $json_str | Out-File -FilePath 'deploy_params.auto.tfvars.json' -Encoding utf8
+                $json_str | Out-File -FilePath 'deploy-vars.json' -Encoding utf8 -Force
 
-          # Terraform init (Azure strorage backend)
-          - task: TerraformCLI@0
-            displayName: 'Terraform init'
+          # Run terragrunt deployment for prod environment
+          - task: AzureCLI@2
+            displayName: Deploy Prod environment
             inputs:
-              command: init
-              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
-              backendType: azurerm
-              backendServiceArm: ${{ variables.armServiceConnection }}
-              backendAzureRmSubscriptionId: ${{ variables.subscriptionId }}
-              ensureBackend: false
-              backendAzureRmKey: ${{ variables.tfstateStorageKey }}
-
-          # Terraform plan
-          - task: TerraformCLI@0
-            displayName: 'Terraform apply'
-            inputs:
-              command: apply
-              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
-              environmentServiceName: ${{ variables.armServiceConnection }}
+              azureSubscription: ${{ variables.armServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
+              inlineScript:
+                terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
-          - task: PowerShell@2
-            name: tfoutput
-            displayName:  Get URLs of the deployed apps
-            inputs:
-              targetType: inline
-              pwsh: true
-              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
-              script: |
-                $tf_output = terraform output -json | ConvertFrom-Json
-                $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
-                Write-Host "Application URL list: ${urls}"
-                Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
+          # - task: PowerShell@2
+          #   name: tfoutput
+          #   displayName:  Get URLs of the deployed apps
+          #   inputs:
+          #     targetType: inline
+          #     pwsh: true
+          #     workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
+          #     script: |
+          #       $tf_output = terraform output -json | ConvertFrom-Json
+          #       $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
+          #       Write-Host "Application URL list: ${urls}"
+          #       Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
 # Verification job
-  - job: Verify
-    displayName: Run verification tests
-    dependsOn: Deploy
+  # - job: Verify
+  #   displayName: Run verification tests
+  #   dependsOn: Deploy
 
-    variables:
-      terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
-    steps:
-    - script: |
-        pip install --upgrade pip
-        pip install --upgrade pytest pytest-azurepipelines urllib3
-      displayName: 'Install dependencies'
+  #   variables:
+  #     terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
+  #   steps:
+  #   - script: |
+  #       pip install --upgrade pip
+  #       pip install --upgrade pytest pytest-azurepipelines urllib3
+  #     displayName: 'Install dependencies'
 
-    - script: |
-        echo "URLs: $(terraformAppUrls)"
-        echo "Whait 10 seconds before test"
-        sleep 10
-        pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
-      displayName: 'Run infra tests'
-      workingDirectory: $(Build.SourcesDirectory)/infra-tests
+  #   - script: |
+  #       echo "URLs: $(terraformAppUrls)"
+  #       echo "Whait 10 seconds before test"
+  #       sleep 10
+  #       pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
+  #     displayName: 'Run infra tests'
+  #     workingDirectory: $(Build.SourcesDirectory)/infra-tests
