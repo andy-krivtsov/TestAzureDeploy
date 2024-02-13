@@ -80,7 +80,9 @@ stages:
           # Install terragrunt
           - task: Bash@3
             displayName: Install Terragrunt
-            script: brew install terragrunt
+            inputs:
+              targetType: inline
+              script: brew install terragrunt
 
           # Test terraform CLI
           - task: TerraformCLI@0
