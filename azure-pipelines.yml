@@ -115,9 +115,7 @@ stages:
               scriptLocation: inlineScript
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
               inlineScript:
-                eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-                which terragrunt
-                terragrunt run-all apply -auto-approve --terragrunt-non-interactive
+                /home/linuxbrew/.linuxbrew/bin/terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
           # - task: PowerShell@2
