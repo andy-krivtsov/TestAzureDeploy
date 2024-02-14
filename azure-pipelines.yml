@@ -88,12 +88,6 @@ stages:
                 brew install terragrunt
                 curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
-          # Test terraform CLI
-          - task: TerraformCLI@0
-            displayName: Check terraform version
-            inputs:
-              command: version
-
           # Generate teragrunt deployment variables
           - task: PowerShell@2
             displayName:  Generate deployment variables file
@@ -125,36 +119,36 @@ stages:
                 /home/linuxbrew/.linuxbrew/bin/terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
-          # - task: PowerShell@2
-          #   name: tfoutput
-          #   displayName:  Get URLs of the deployed apps
-          #   inputs:
-          #     targetType: inline
-          #     pwsh: true
-          #     workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp'
-          #     script: |
-          #       $tf_output = terraform output -json | ConvertFrom-Json
-          #       $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
-          #       Write-Host "Application URL list: ${urls}"
-          #       Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
+          - task: PowerShell@2
+            name: tfoutput
+            displayName:  Get URLs of the deployed apps
+            inputs:
+              targetType: inline
+              pwsh: true
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod/apps'
+              script: |
+                $tf_output = terragrunt output -json | ConvertFrom-Json
+                $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
+                Write-Host "Application URL list: ${urls}"
+                Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
 # Verification job
-  # - job: Verify
-  #   displayName: Run verification tests
-  #   dependsOn: Deploy
+  - job: Verify
+    displayName: Run verification tests
+    dependsOn: Deploy
 
-  #   variables:
-  #     terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
-  #   steps:
-  #   - script: |
-  #       pip install --upgrade pip
-  #       pip install --upgrade pytest pytest-azurepipelines urllib3
-  #     displayName: 'Install dependencies'
+    variables:
+      terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
+    steps:
+    - script: |
+        pip install --upgrade pip
+        pip install --upgrade pytest pytest-azurepipelines urllib3
+      displayName: 'Install dependencies'
 
-  #   - script: |
-  #       echo "URLs: $(terraformAppUrls)"
-  #       echo "Whait 10 seconds before test"
-  #       sleep 10
-  #       pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
-  #     displayName: 'Run infra tests'
-  #     workingDirectory: $(Build.SourcesDirectory)/infra-tests
+    - script: |
+        echo "URLs: $(terraformAppUrls)"
+        echo "Whait 10 seconds before test"
+        sleep 10
+        pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
+      displayName: 'Run infra tests'
+      workingDirectory: $(Build.SourcesDirectory)/infra-tests
