@@ -80,12 +80,13 @@ stages:
 
           # Install terragrunt
           - task: Bash@3
-            displayName: Install Terragrunt
+            displayName: Install Terragrunt and tflint
             inputs:
               targetType: inline
               script: |
                 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
                 brew install terragrunt
+                curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
           # Test terraform CLI
           - task: TerraformCLI@0
