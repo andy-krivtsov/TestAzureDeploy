@@ -116,7 +116,7 @@ stages:
                 export ARM_CLIENT_SECRET="$servicePrincipalKey"
                 export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="${{ variables.armSubscriptionId }}"
-                /home/linuxbrew/.linuxbrew/bin/terragrunt run-all apply -auto-approve --terragrunt-non-interactive
+                terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
           - task: PowerShell@2
