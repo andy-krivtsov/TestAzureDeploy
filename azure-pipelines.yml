@@ -84,8 +84,8 @@ stages:
             inputs:
               targetType: inline
               script: |
-                eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-                brew install terragrunt
+                curl -sLo /usr/local/bin/terragrunt   https://github.com/gruntwork-io/terragrunt/releases/download/v0.55.1/terragrunt_linux_amd64
+                chmod +x terragrunt
                 curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
           # Generate teragrunt deployment variables
