@@ -119,14 +119,21 @@ stages:
                 terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
-          - task: PowerShell@2
+          - task: AzureCLI@2
             name: tfoutput
-            displayName:  Get URLs of the deployed apps
+            displayName: Get URLs of the deployed apps
             inputs:
-              targetType: inline
-              pwsh: true
+              azureSubscription: ${{ variables.armServiceConnection }}
+              scriptType: pscore
+              scriptLocation: inlineScript
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod/apps'
-              script: |
+              addSpnToEnvironment: true
+              inlineScript: |
+                $Env:ARM_CLIENT_ID = "$Env:servicePrincipalId"
+                $Env:ARM_CLIENT_SECRET = "$Env:servicePrincipalKey"
+                $Env:ARM_TENANT_ID = "$Env:tenantId"
+                $Env:ARM_SUBSCRIPTION_ID = "${{ variables.armSubscriptionId }}"
+
                 $tf_output = terragrunt output -json | ConvertFrom-Json
                 $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
                 Write-Host "Application URL list: ${urls}"
