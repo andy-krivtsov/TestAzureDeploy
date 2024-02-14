@@ -21,7 +21,7 @@ variables:
   armServiceConnection: AzureServiceConnection
   armSubscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
 
-  skipBuild: true
+  skipBuild: false
 
 pool:
   vmImage: $(vmImageName)
