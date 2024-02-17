@@ -11,6 +11,8 @@ trigger:
     include:
       - terraform/demoapp.v2
       - infra-tests
+      - cicd/azure-pipelines-infra.yml
+      - cicd/templates
 
 variables:
   vmImageName: ubuntu-latest
@@ -31,7 +33,7 @@ stages:
   displayName: Deploy infrastructure and applications
 
   jobs:
-  - deployment: deploy-infra
+  - deployment: deploy_infra
     displayName: Deploy Infrastructure
 
     # Fake environment (history/tracebility only)

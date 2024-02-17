@@ -12,7 +12,8 @@ trigger:
       - demoapp
       - contrib
       - tests
-      - cicd
+      - cicd/azure-pipelines.yml
+      - cicd/templates
       - Dockerfile
 
 variables:
