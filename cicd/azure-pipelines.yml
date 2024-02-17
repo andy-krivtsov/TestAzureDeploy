@@ -63,3 +63,15 @@ stages:
         containerRegistry: ${{ variables.registryServiceConnection }}
         tags: ${{ variables.tag }}
 
+# Deployment stage
+- stage: apps_deploy
+  displayName: Deploy applications
+
+  jobs:
+    - template: templates/deploy-apps-template.yml
+      parameters:
+        armServiceConnection: ${{ variables.armServiceConnection }}
+        armSubscriptionId: ${{ variables.armSubscriptionId }}
+        environmentName: ${{ variables.environmentName }}
+        tag: ${{ variables.tag }}
+        verifyCommit: true
