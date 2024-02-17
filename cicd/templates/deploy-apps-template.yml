@@ -1,9 +1,22 @@
+parameters:
+  - name: tag
+    type: string
+
+  - name: armServiceConnection
+    type: string
+
+  - name: armSubscriptionId
+    type: string
+
+  - name: environmentName
+    type: string
+
 jobs:
-  - deployment: Deploy
+  - deployment: deploy_apps
     displayName: Deploy Container Apps
 
     # Fake environment (history/tracebility only)
-    environment: '${{ variables.environmentName }}'
+    environment: '${{ parameters.environmentName }}'
 
     strategy:
       runOnce:
@@ -12,19 +25,11 @@ jobs:
           # Checkout to Build.SourcesDirectory
           - checkout: self
 
-          # Install terraform
-          - task: TerraformInstaller@1
-            displayName: Install Terraform
-
-          # Install terragrunt
+          # Install terraform, terragrunt, tflint
           - task: Bash@3
             displayName: Install Terragrunt and tflint
             inputs:
-              targetType: inline
-              script: |
-                curl -sLo /usr/local/bin/terragrunt   https://github.com/gruntwork-io/terragrunt/releases/download/v0.55.1/terragrunt_linux_amd64
-                chmod +x /usr/local/bin/terragrunt
-                curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+              filePath: scripts/install-terraform.sh
 
           # Generate teragrunt deployment variables
           - task: PowerShell@2
@@ -35,7 +40,7 @@ jobs:
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
               script: |
                 $json_str  = @{
-                  app_tag = '${{ variables.tag }}'
+                  app_tag = '${{ parameters.tag }}'
                 } | ConvertTo-Json
                 $json_str | Write-Output
                 $json_str | Out-File -FilePath 'deploy-vars.json' -Encoding utf8 -Force
@@ -44,7 +49,7 @@ jobs:
           - task: AzureCLI@2
             displayName: Deploy Prod environment
             inputs:
-              azureSubscription: ${{ variables.armServiceConnection }}
+              azureSubscription: ${{ parameters.armServiceConnection }}
               scriptType: bash
               scriptLocation: inlineScript
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
@@ -53,7 +58,7 @@ jobs:
                 export ARM_CLIENT_ID="$servicePrincipalId"
                 export ARM_CLIENT_SECRET="$servicePrincipalKey"
                 export ARM_TENANT_ID="$tenantId"
-                export ARM_SUBSCRIPTION_ID="${{ variables.armSubscriptionId }}"
+                export ARM_SUBSCRIPTION_ID="${{ parameters.armSubscriptionId }}"
                 terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
           # Terraform output - get URLs of the apps
@@ -61,7 +66,7 @@ jobs:
             name: tfoutput
             displayName: Get URLs of the deployed apps
             inputs:
-              azureSubscription: ${{ variables.armServiceConnection }}
+              azureSubscription: ${{ parameters.armServiceConnection }}
               scriptType: pscore
               scriptLocation: inlineScript
               workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod/apps'
@@ -70,7 +75,7 @@ jobs:
                 $Env:ARM_CLIENT_ID = "$Env:servicePrincipalId"
                 $Env:ARM_CLIENT_SECRET = "$Env:servicePrincipalKey"
                 $Env:ARM_TENANT_ID = "$Env:tenantId"
-                $Env:ARM_SUBSCRIPTION_ID = "${{ variables.armSubscriptionId }}"
+                $Env:ARM_SUBSCRIPTION_ID = "${{ parameters.armSubscriptionId }}"
 
                 $tf_output = terragrunt output -json | ConvertFrom-Json
                 $urls = $tf_output.apps_url.value | %{ return "https://" + $_  } | Join-String -Separator ","
@@ -78,12 +83,13 @@ jobs:
                 Write-Host "##vso[task.setvariable variable=tf_app_urls;isOutput=true]${urls}"
 
 # Verification job
-  - job: Verify
-    displayName: Run verification tests
-    dependsOn: Deploy
+  - job: verify_apps
+    displayName: Run apps verification tests
+    dependsOn: deploy_apps
 
     variables:
-      terraformAppUrls: $[dependencies.Deploy.outputs['Deploy.tfoutput.tf_app_urls']]
+      terraformAppUrls: $[dependencies.Deploy.outputs['deploy_apps.tfoutput.tf_app_urls']]
+
     steps:
     - script: |
         pip install --upgrade pip
