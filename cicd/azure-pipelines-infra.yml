@@ -29,7 +29,7 @@ pool:
 
 stages:
 # Deployment stage
-- stage: Infra Deploy
+- stage: infra_deploy
   displayName: Deploy infrastructure
 
   jobs:
@@ -69,7 +69,7 @@ stages:
                 terragrunt run-all apply -auto-approve --terragrunt-non-interactive
 
 # Deployment stage
-- stage: Apps Deploy
+- stage: apps_deploy
   displayName: Deploy applications
 
   jobs:
