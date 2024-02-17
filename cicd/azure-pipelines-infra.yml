@@ -73,7 +73,7 @@ stages:
   displayName: Deploy applications
 
   jobs:
-    - template: cicd/templates/deploy-apps-template.yml
+    - template: templates/deploy-apps-template.yml
       parameters:
         armServiceConnection: ${{ variables.armServiceConnection }}
         armSubscriptionId: ${{ variables.armSubscriptionId }}
