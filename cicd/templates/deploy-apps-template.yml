@@ -88,7 +88,7 @@ jobs:
     dependsOn: deploy_apps
 
     variables:
-      terraformAppUrls: $[dependencies.Deploy.outputs['deploy_apps.tfoutput.tf_app_urls']]
+      terraformAppUrls: $[dependencies.deploy_apps.outputs['deploy_apps.tfoutput.tf_app_urls']]
 
     steps:
     - script: |
