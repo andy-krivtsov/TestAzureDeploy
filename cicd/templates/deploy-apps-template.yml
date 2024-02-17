@@ -47,12 +47,12 @@ jobs:
 
           # Run terragrunt deployment for prod environment
           - task: AzureCLI@2
-            displayName: Deploy Prod environment
+            displayName: Deploy applications to the Prod environment
             inputs:
               azureSubscription: ${{ parameters.armServiceConnection }}
               scriptType: bash
               scriptLocation: inlineScript
-              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod'
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod/apps'
               addSpnToEnvironment: true
               inlineScript: |
                 export ARM_CLIENT_ID="$servicePrincipalId"
