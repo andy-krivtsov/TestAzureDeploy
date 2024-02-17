@@ -5,13 +5,6 @@ data "azurerm_resource_group" "rg" {
   name = var.resource_group
 }
 
-resource "random_id" "deploy_id" {
-  keepers = {
-    resource_group = var.resource_group
-  }
-  byte_length = 4
-}
-
 data "azurerm_key_vault" "cert_vault" {
   name                = var.cert_keyvault
   resource_group_name = var.cert_keyvault_rg
@@ -22,7 +15,7 @@ data "azurerm_key_vault_certificate" "app_cert" {
   key_vault_id = data.azurerm_key_vault.cert_vault.id
 }
 
-data "azurerm_key_vault_secret" "appCertSecret" {
+data "azurerm_key_vault_secret" "app_cert_secret" {
   name         = element(reverse(split("/", data.azurerm_key_vault_certificate.app_cert.secret_id)), 1)
   key_vault_id = data.azurerm_key_vault.cert_vault.id
 }

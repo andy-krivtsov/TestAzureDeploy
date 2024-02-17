@@ -1,5 +1,5 @@
 resource "azurerm_web_pubsub" "pubsub" {
-  name                = "${var.name_prefix}-pubsub-${random_id.deploy_id.hex}"
+  name                = "${var.web_pubsub}-${var.name_suffix}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 
@@ -20,7 +20,7 @@ resource "azurerm_web_pubsub" "pubsub" {
 }
 
 resource "azurerm_web_pubsub_hub" "front" {
-  name                          = "front"
+  name                          = var.web_pubsub_front_hub
   web_pubsub_id                 = azurerm_web_pubsub.pubsub.id
   anonymous_connections_enabled = false
 

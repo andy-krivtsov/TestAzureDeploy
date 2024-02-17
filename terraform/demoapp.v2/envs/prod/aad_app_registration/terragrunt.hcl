@@ -7,25 +7,23 @@ include "root" {
   path = find_in_parent_folders()
 }
 
-# Load common locals variables
-include "env" {
-  path           = find_in_parent_folders("env-vars.hcl")
-  expose         = true
-  merge_strategy = "no_merge"
-}
-
 locals {
-  cmn = include.env.locals
+  data = merge(
+    jsondecode(read_tfvars_file(find_in_parent_folders("common.tfvars"))),
+    jsondecode(read_tfvars_file(find_in_parent_folders("env.tfvars")))
+  )
+
+  front_service_url     = "https://${local.data.front_service_name}${local.data.hostname_suffix}.${local.data.custom_domain}"
 }
 
 inputs = {
-  display_name = local.cmn.app_display_name
-  description  = local.cmn.app_description
-  homepage_url = local.cmn.front_service_url
-  logout_url   = "${local.cmn.front_service_url}${local.cmn.logout_path}"
+  display_name = local.data.app_display_name
+  description  = local.data.app_description
+  homepage_url = local.front_service_url
+  logout_url   = "${local.front_service_url}${local.data.logout_path}"
   redirect_uris = [
-    "${local.cmn.front_service_url}${local.cmn.redirect_path}",
-    "${local.cmn.front_local_url}${local.cmn.redirect_path}"
+    "${local.front_service_url}${local.data.redirect_path}",
+    "${local.data.front_local_url}${local.data.redirect_path}"
   ]
 }
 

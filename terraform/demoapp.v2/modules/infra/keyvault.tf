@@ -1,5 +1,5 @@
 resource "azurerm_key_vault" "secrets_vault" {
-  name                            = "${var.name_prefix}-vault-${random_id.deploy_id.hex}"
+  name                            = "${var.keyvault}-${var.name_suffix}"
   location                        = data.azurerm_resource_group.rg.location
   resource_group_name             = data.azurerm_resource_group.rg.name
   enabled_for_disk_encryption     = true
@@ -18,8 +18,8 @@ resource "azurerm_role_assignment" "secrets_vault_role" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
-resource "azurerm_key_vault_secret" "clientId" {
-  name         = "${var.name_prefix}-auth-client-id"
+resource "azurerm_key_vault_secret" "client_id" {
+  name         = "${var.keyvault_prefix}auth-client-id"
   value        = var.app_client_id
   key_vault_id = azurerm_key_vault.secrets_vault.id
 
@@ -27,7 +27,7 @@ resource "azurerm_key_vault_secret" "clientId" {
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
-  name         = "${var.name_prefix}-auth-client-secret"
+  name         = "${var.keyvault_prefix}auth-client-secret"
   value        = var.app_client_secret
   key_vault_id = azurerm_key_vault.secrets_vault.id
 
@@ -35,7 +35,7 @@ resource "azurerm_key_vault_secret" "client_secret" {
 }
 
 resource "azurerm_key_vault_secret" "tenant_id" {
-  name         = "${var.name_prefix}-auth-tenant-id"
+  name         = "${var.keyvault_prefix}auth-tenant-id"
   value        = var.app_tenant_id
   key_vault_id = azurerm_key_vault.secrets_vault.id
 
@@ -48,8 +48,16 @@ resource "random_password" "session_key" {
 }
 
 resource "azurerm_key_vault_secret" "session_key" {
-  name         = "${var.name_prefix}-auth-session-key"
+  name         = "${var.keyvault_prefix}auth-session-key"
   value        = random_password.session_key.result
+  key_vault_id = azurerm_key_vault.secrets_vault.id
+
+  depends_on   = [ azurerm_role_assignment.secrets_vault_role ]
+}
+
+resource "azurerm_key_vault_secret" "appinsights_constr" {
+  name         = "${var.keyvault_prefix}app-insights-constr"
+  value        = azurerm_application_insights.appinsights.connection_string
   key_vault_id = azurerm_key_vault.secrets_vault.id
 
   depends_on   = [ azurerm_role_assignment.secrets_vault_role ]

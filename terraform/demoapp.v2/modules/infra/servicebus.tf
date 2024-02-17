@@ -1,31 +1,31 @@
 # Service bus
 resource "azurerm_servicebus_namespace" "app_ns" {
-  name                = "${var.name_prefix}-namespace-${random_id.deploy_id.hex}"
+  name                = "${var.servicebus_namespace}-${var.name_suffix}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   sku                 = "Standard"
 }
 
 resource "azurerm_servicebus_topic" "orders_topic" {
-  name                = "${var.name_prefix}-orders-topic"
+  name                = var.servicebus_orders_topic
   namespace_id        = azurerm_servicebus_namespace.app_ns.id
   default_message_ttl = "PT8H"
 }
 
 resource "azurerm_servicebus_topic" "status_topic" {
-  name                = "${var.name_prefix}-status-topic"
+  name                = var.servicebus_status_topic
   namespace_id        = azurerm_servicebus_namespace.app_ns.id
   default_message_ttl = "PT8H"
 }
 
 resource "azurerm_servicebus_subscription" "back_orders_sub" {
-  name               =  "${var.name_prefix}-back-orders-sub"
+  name               = var.servicebus_back_orders_sub
   topic_id           = azurerm_servicebus_topic.orders_topic.id
   max_delivery_count = 1
 }
 
 resource "azurerm_servicebus_subscription" "front_status_sub" {
-  name               =  "${var.name_prefix}-front-status-sub"
+  name               = var.servicebus_front_status_sub
   topic_id           = azurerm_servicebus_topic.status_topic.id
   max_delivery_count = 1
 }

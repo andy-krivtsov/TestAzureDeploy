@@ -1,0 +1,67 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - dev
+    - terragrunt
+  tags:
+    include:
+    - '*'
+  paths:
+    include:
+      - terraform/demoapp.v2
+      - infra-tests
+
+variables:
+  vmImageName: ubuntu-latest
+  location: westeurope
+  environmentName: Python-Container-App-Dev
+
+  tag: dev
+
+  armServiceConnection: AzureServiceConnection
+  armSubscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+# Deployment stage
+- stage: Deploy
+  displayName: Deploy infrastructure and applications
+
+  jobs:
+  - deployment: deploy-infra
+    displayName: Deploy Infrastructure
+
+    # Fake environment (history/tracebility only)
+    environment: '${{ variables.environmentName }}'
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Checkout to Build.SourcesDirectory
+          - checkout: self
+
+          # Install terraform, terragrunt, tflint
+          - task: Bash@3
+            displayName: Install Terragrunt and tflint
+            inputs:
+              filePath: scripts/install-terraform.sh
+
+          # Run terragrunt infra deployment for prod environment
+          - task: AzureCLI@2
+            displayName: Deploy Prod environment infrastructure
+            inputs:
+              azureSubscription: ${{ variables.armServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              workingDirectory: '$(Build.SourcesDirectory)/terraform/demoapp.v2/envs/prod/infra'
+              addSpnToEnvironment: true
+              inlineScript: |
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_CLIENT_SECRET="$servicePrincipalKey"
+                export ARM_TENANT_ID="$tenantId"
+                export ARM_SUBSCRIPTION_ID="${{ variables.armSubscriptionId }}"
+                terragrunt run-all apply -auto-approve --terragrunt-non-interactive

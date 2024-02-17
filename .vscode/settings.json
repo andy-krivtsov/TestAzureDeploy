@@ -25,5 +25,11 @@
     ],
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/contrib:${env:PYTHONPATH}"
+    },
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json": [
+            "file:///workspaces/TestAzureDeploy/deploy-apps-template.yml",
+            "file:///workspaces/TestAzureDeploy/azure-pipelines-infra.yml"
+        ]
     }
 }

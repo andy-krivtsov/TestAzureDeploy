@@ -73,10 +73,4 @@ variable "keyvault_prefix" {
 
 variable "keyvault_secrets" {
   type = list(string)
-  default = [
-    "auth-client-id",
-    "auth-client-secret",
-    "auth-tenant-id",
-    "auth-session-key"
-  ]
 }

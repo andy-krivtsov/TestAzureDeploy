@@ -1,6 +1,85 @@
-variable "name_prefix" {
-  type     = string
-#  default  = "demoapp"
+variable "con_app_env" {
+  type = string
+}
+
+variable "con_app_env_log" {
+  type = string
+}
+
+variable "app_insight" {
+  type = string
+}
+
+variable "db_account" {
+  type = string
+}
+
+variable "db_database" {
+  type = string
+}
+
+variable "db_orders_container" {
+  type = string
+}
+
+variable "db_processing_container" {
+  type = string
+}
+
+variable "con_app_env_identity" {
+  type = string
+}
+
+variable "con_app_env_cert" {
+  type = string
+}
+
+variable "keyvault" {
+  type = string
+}
+
+variable "keyvault_prefix" {
+  type = string
+}
+
+variable "servicebus_namespace" {
+  type = string
+}
+
+variable "servicebus_orders_topic" {
+  type = string
+}
+
+variable "servicebus_status_topic" {
+  type = string
+}
+
+variable "servicebus_front_status_sub" {
+  type = string
+}
+
+variable "servicebus_back_orders_sub" {
+  type = string
+}
+
+variable "storage_account" {
+  type = string
+}
+
+variable "storage_container" {
+  type = string
+}
+
+variable "web_pubsub" {
+  type = string
+}
+
+variable "web_pubsub_front_hub" {
+  type = string
+}
+
+variable "name_suffix" {
+  type = string
 }
 
 variable "pubsub_handlers" {

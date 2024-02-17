@@ -1,0 +1,65 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - dev
+    - terragrunt
+  tags:
+    include:
+    - '*'
+  paths:
+    include:
+      - demoapp
+      - contrib
+      - tests
+      - cicd
+      - Dockerfile
+
+variables:
+  vmImageName: ubuntu-latest
+  location: westeurope
+  environmentName: Python-Container-App-Dev
+
+  registryServiceConnection: akazureregistry
+  imageNamespace: learn
+  imageName: demoapp
+  tag: dev
+
+  armServiceConnection: AzureServiceConnection
+  armSubscriptionId: b0570a95-0377-4937-8e15-6555b6f600f4
+
+  skipBuild: false
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+# Build stage
+- stage: Build
+  displayName: Build and push stage
+
+  jobs:
+  - job: Build
+    displayName: Build Image
+    condition: eq('${{ variables.skipBuild }}', false)
+
+    steps:
+  # Build docker image step
+    - task: Docker@2
+      displayName: Build the image
+      inputs:
+        command: build
+        repository: '${{ variables.imageNamespace }}/${{ variables.imageName }}'
+        containerRegistry: ${{ variables.registryServiceConnection }}
+        tags: ${{ variables.tag }}
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        arguments: --build-arg git_commit=$(Build.SourceVersion)
+
+    - task: Docker@2
+      displayName: Push the image to the registry
+      inputs:
+        command: push
+        repository: '${{ variables.imageNamespace }}/${{ variables.imageName }}'
+        containerRegistry: ${{ variables.registryServiceConnection }}
+        tags: ${{ variables.tag }}
+

@@ -1,5 +1,5 @@
 resource "azurerm_application_insights" "appinsights" {
-  name                =  "${var.name_prefix}-appinsights-${random_id.deploy_id.hex}"
+  name                =  "${var.app_insight}-${var.name_suffix}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   workspace_id        = azurerm_log_analytics_workspace.logs.id

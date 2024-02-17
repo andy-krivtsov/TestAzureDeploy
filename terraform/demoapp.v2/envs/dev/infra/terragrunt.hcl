@@ -19,32 +19,31 @@ dependency "aad" {
   mock_outputs_allowed_terraform_commands = ["validate"]
 }
 
-# Load common locals variables
-include "env" {
-  path           = find_in_parent_folders("env-vars.hcl")
-  expose         = true
-  merge_strategy = "no_merge"
-}
-
 locals {
-  cmn = include.env.locals
+  infra = jsondecode(read_tfvars_file(find_in_parent_folders("common-infra.tfvars")))
+
+  data = merge(
+    jsondecode(read_tfvars_file(find_in_parent_folders("common.tfvars"))),
+    jsondecode(read_tfvars_file(find_in_parent_folders("env.tfvars")))
+  )
+
+  front_service_url = "https://${local.data.front_service_name}${local.data.hostname_suffix}.${local.data.custom_domain}"
 }
 
-inputs = {
-  name_prefix              = local.cmn.name_prefix
-  resource_group           = local.cmn.resource_group
-  acr_registry             = local.cmn.acr_registry
-  acr_registry_rg          = local.cmn.shared_resource_group
-  cert_keyvault            = local.cmn.cert_keyvault
-  cert_keyvault_rg         = local.cmn.cert_keyvault_rg
-  cert_keyvault_key        = local.cmn.cert_keyvault_key
-  pubsub_handlers          = {
-    "front"       = "${local.cmn.front_service_url}${local.cmn.pubsub_handler_path}"
-    "front_local" = "tunnel://${local.cmn.pubsub_handler_path}"
+inputs = merge(
+  local.infra,
+  {
+    resource_group           = local.data.resource_group
+    name_suffix              = local.data.name_suffix
+
+    pubsub_handlers          = {
+      "front"       = "${local.front_service_url}${local.data.pubsub_handler_path}"
+      "front_local" = "tunnel://${local.data.pubsub_handler_path}"
+    }
+
+    app_client_id            = dependency.aad.outputs.client_id
+    app_client_secret        = dependency.aad.outputs.client_secret
+    app_service_principal_id = dependency.aad.outputs.service_principal_id
+    app_tenant_id            = dependency.aad.outputs.tenant_id
   }
-  app_client_id            = dependency.aad.outputs.client_id
-  app_client_secret        = dependency.aad.outputs.client_secret
-  app_service_principal_id = dependency.aad.outputs.service_principal_id
-  app_tenant_id            = dependency.aad.outputs.tenant_id
-}
-
+)

@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "stor" {
-  name                     = "${var.name_prefix}stor${random_id.deploy_id.hex}"
+  name                     = "${var.storage_account}${var.name_suffix}"
   resource_group_name      = data.azurerm_resource_group.rg.name
   location                 = data.azurerm_resource_group.rg.location
   account_kind             = "StorageV2"
@@ -9,7 +9,7 @@ resource "azurerm_storage_account" "stor" {
 }
 
 resource "azurerm_storage_container" "stor_container" {
-  name                  = "appdata"
+  name                  = var.storage_container
   storage_account_name  = azurerm_storage_account.stor.name
   container_access_type = "private"
 }
