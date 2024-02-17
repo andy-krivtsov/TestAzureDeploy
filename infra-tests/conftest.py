@@ -2,9 +2,7 @@ import pytest
 
 def pytest_addoption(parser: pytest.Parser):
     parser.addoption("--app-urls", dest="app_urls", type=str, default="http://localhost:8000,http://localhost:8100,http://localhost:8200")
-    parser.addoption("--commit", dest="commit", type=str, default="demo-commit-sha")
-
-
+    parser.addoption("--commit", dest="commit", type=str, default="")
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     if "app_url" in metafunc.fixturenames:

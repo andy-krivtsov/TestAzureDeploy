@@ -79,4 +79,5 @@ stages:
         armSubscriptionId: ${{ variables.armSubscriptionId }}
         environmentName: ${{ variables.environmentName }}
         tag: ${{ variables.tag }}
+        verifyCommit: false
 

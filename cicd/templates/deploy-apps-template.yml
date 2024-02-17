@@ -11,6 +11,10 @@ parameters:
   - name: environmentName
     type: string
 
+  - name: verifyCommit
+    type: boolean
+    default: true
+
 jobs:
   - deployment: deploy_apps
     displayName: Deploy Container Apps
@@ -97,9 +101,20 @@ jobs:
       displayName: 'Install dependencies'
 
     - script: |
-        echo "URLs: $(terraformAppUrls)"
         echo "Whait 10 seconds before test"
         sleep 10
-        pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
-      displayName: 'Run infra tests'
-      workingDirectory: $(Build.SourcesDirectory)/infra-tests
+      displayName: 'Wait 10 seconds'
+
+    - ${{ if parameters.verifyCommit }}:
+      - script: |
+          echo "URLs: $(terraformAppUrls), commit SHA: $(Build.SourceVersion)"
+          pytest --app-urls "$(terraformAppUrls)" --commit "$(Build.SourceVersion)"
+        displayName: 'Run infra tests'
+        workingDirectory: $(Build.SourcesDirectory)/infra-tests
+
+    - ${{ else }}:
+      - script: |
+          echo "URLs: $(terraformAppUrls), don't check commit SHA"
+          pytest --app-urls "$(terraformAppUrls)"
+        displayName: 'Run infra tests'
+        workingDirectory: $(Build.SourcesDirectory)/infra-tests

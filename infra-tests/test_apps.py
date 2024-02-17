@@ -20,6 +20,7 @@ class TestApplications:
 
         logging.info(resp.data)
 
-        data = resp.json()
-        assert data["commit"] == git_commit
+        if git_commit:
+            data = resp.json()
+            assert data["commit"] == git_commit
 
